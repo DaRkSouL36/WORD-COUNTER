@@ -7,7 +7,7 @@ public class Main extends JFrame implements ActionListener
 {
     JTextArea textArea;
     JLabel countLabel;
-    JButton countButton;
+    JButton countButton, clearButton, exitButton;
     public Main()
     {
         super("WORD COUNTER");
@@ -36,10 +36,26 @@ public class Main extends JFrame implements ActionListener
         countButton.setBackground(new Color(30, 144, 255));
         countButton.setFocusPainted(false);
 
+        clearButton = new JButton("CLEAR TEXT");
+        clearButton.addActionListener(this);
+        clearButton.setFont(new Font("Times New Roman", Font.BOLD, 14));
+        clearButton.setForeground(Color.WHITE);
+        clearButton.setBackground(new Color(220, 20, 60));
+        clearButton.setFocusPainted(false);
+
+        exitButton = new JButton("EXIT");
+        exitButton.addActionListener(this);
+        exitButton.setFont(new Font("Times New Roman", Font.BOLD, 14));
+        exitButton.setForeground(Color.WHITE);
+        exitButton.setBackground(new Color(50, 205, 50));
+        exitButton.setFocusPainted(false);
+
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.setBackground(Color.WHITE);
         buttonPanel.add(countButton);
+        buttonPanel.add(clearButton);
+        buttonPanel.add(exitButton);
 
         add(scrollPane, BorderLayout.CENTER);
         add(countLabel, BorderLayout.SOUTH);
@@ -48,7 +64,8 @@ public class Main extends JFrame implements ActionListener
 
     public void actionPerformed(ActionEvent e)
     {
-        if (e.getSource() == countButton) {
+        if (e.getSource() == countButton)
+        {
             String text = textArea.getText().trim();
             if (text.isEmpty())
                 countLabel.setText("NO WORDS ENTERED!");
@@ -60,6 +77,15 @@ public class Main extends JFrame implements ActionListener
                 countLabel.setText("WORD COUNT : " + wordCount);
             }
         }
+
+        else if (e.getSource() == clearButton)
+        {
+            textArea.setText("");
+            countLabel.setText("WORD COUNT : 0");
+        }
+
+        else if (e.getSource() == exitButton)
+            System.exit(0);
     }
 
     public static void main(String[] args)
