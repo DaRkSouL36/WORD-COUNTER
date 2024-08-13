@@ -2,6 +2,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 public class Main extends JFrame implements ActionListener
 {
@@ -20,6 +22,8 @@ public class Main extends JFrame implements ActionListener
 
         textArea = new JTextArea();
         textArea.setFont(new Font("Times New Roman", Font.BOLD, 16));
+
+        textArea.getDocument().addDocumentListener(new WordCount());
 
         JScrollPane scrollPane = new JScrollPane(textArea);
         scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -62,11 +66,43 @@ public class Main extends JFrame implements ActionListener
         add(buttonPanel, BorderLayout.NORTH);
     }
 
+    private class WordCount implements DocumentListener
+    {
+        public void insertUpdate(DocumentEvent e)
+        {
+            updateWordCount();
+        }
+        public void removeUpdate(DocumentEvent e)
+        {
+            updateWordCount();
+        }
+        public void changedUpdate(DocumentEvent e)
+        {
+            updateWordCount();
+        }
+
+        private void updateWordCount()
+        {
+            String text = textArea.getText().trim();
+
+            if (text.isEmpty())
+                countLabel.setText("WORD COUNT : 0");
+
+            else
+            {
+                String[] words = text.split("\\s+");
+                int wordCount = words.length;
+                countLabel.setText("WORD COUNT : " + wordCount);
+            }
+        }
+    }
+
     public void actionPerformed(ActionEvent e)
     {
         if (e.getSource() == countButton)
         {
             String text = textArea.getText().trim();
+
             if (text.isEmpty())
                 countLabel.setText("NO WORDS ENTERED!");
 
