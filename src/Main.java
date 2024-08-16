@@ -5,10 +5,10 @@ import java.awt.event.ActionListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-public class Main extends JFrame implements ActionListener
+public class Main extends JFrame implements ActionListener 
 {
     JTextArea textArea;
-    JLabel countLabel;
+    JLabel wordCountLabel, charCountLabel;
     JButton clearButton, exitButton;
     public Main()
     {
@@ -28,10 +28,15 @@ public class Main extends JFrame implements ActionListener
         JScrollPane scrollPane = new JScrollPane(textArea);
         scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        countLabel = new JLabel("WORD COUNT : 0");
-        countLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        countLabel.setFont(new Font("Times New Roman", Font.BOLD, 18));
-        countLabel.setForeground(Color.BLUE);
+        wordCountLabel = new JLabel("WORD COUNT : 0");
+        wordCountLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        wordCountLabel.setFont(new Font("Times New Roman", Font.BOLD, 18));
+        wordCountLabel.setForeground(Color.RED);
+
+        charCountLabel = new JLabel("CHARACTER COUNT: 0");
+        charCountLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        charCountLabel.setFont(new Font("Times New Roman", Font.BOLD, 18));
+        charCountLabel.setForeground(Color.BLUE);
 
         clearButton = new JButton("CLEAR TEXT");
         clearButton.addActionListener(this);
@@ -53,8 +58,12 @@ public class Main extends JFrame implements ActionListener
         buttonPanel.add(clearButton);
         buttonPanel.add(exitButton);
 
+        JPanel countPanel = new JPanel(new GridLayout(2, 1));
+        countPanel.add(wordCountLabel);
+        countPanel.add(charCountLabel);
+
         add(scrollPane, BorderLayout.CENTER);
-        add(countLabel, BorderLayout.SOUTH);
+        add(countPanel, BorderLayout.SOUTH);
         add(buttonPanel, BorderLayout.NORTH);
     }
 
@@ -62,29 +71,34 @@ public class Main extends JFrame implements ActionListener
     {
         public void insertUpdate(DocumentEvent e)
         {
-            updateWordCount();
+            updateCount();
         }
         public void removeUpdate(DocumentEvent e)
         {
-            updateWordCount();
+            updateCount();
         }
         public void changedUpdate(DocumentEvent e)
         {
-            updateWordCount();
+            updateCount();
         }
 
-        private void updateWordCount()
+        private void updateCount()
         {
             String text = textArea.getText().trim();
 
-            if(text.isEmpty())
-                countLabel.setText("WORD COUNT : 0");
+            if (text.isEmpty())
+            {
+                wordCountLabel.setText("WORD COUNT: 0");
+                charCountLabel.setText("CHARACTER COUNT: 0");
+            }
 
             else
             {
                 String[] words = text.split("\\s+");
                 int wordCount = words.length;
-                countLabel.setText("WORD COUNT : " + wordCount);
+                int charCount = text.length();
+                wordCountLabel.setText("WORD COUNT : " + wordCount);
+                charCountLabel.setText("CHARACTER COUNT: " + charCount);
             }
         }
     }
@@ -95,7 +109,8 @@ public class Main extends JFrame implements ActionListener
         if(e.getSource() == clearButton)
         {
             textArea.setText("");
-            countLabel.setText("WORD COUNT : 0");
+            wordCountLabel.setText("WORD COUNT : 0");
+            charCountLabel.setText("CHARACTER COUNT: 0");
         }
 
         else if(e.getSource() == exitButton)
@@ -104,12 +119,6 @@ public class Main extends JFrame implements ActionListener
 
     public static void main(String[] args)
     {
-        SwingUtilities.invokeLater(new Runnable()
-        {
-            public void run()
-            {
-                new Main();
-            }
-        });
+        SwingUtilities.invokeLater(Main::new);
     }
 }
