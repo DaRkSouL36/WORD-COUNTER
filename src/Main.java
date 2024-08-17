@@ -8,13 +8,13 @@ import javax.swing.event.DocumentListener;
 public class Main extends JFrame implements ActionListener 
 {
     JTextArea textArea;
-    JLabel wordCountLabel, charCountLabel, sentenceCountLabel;
+    JLabel wordCountLabel, sentenceCountLabel, charCountLabel;
     JButton clearButton, exitButton;
     public Main()
     {
         super("WORD COUNTER");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(500, 500);
+        setSize(1000, 500);
         setLocationRelativeTo(null);
         setVisible(true);
         setLayout(new BorderLayout());
@@ -23,7 +23,7 @@ public class Main extends JFrame implements ActionListener
         textArea = new JTextArea();
         textArea.setFont(new Font("Times New Roman", Font.BOLD, 16));
 
-        textArea.getDocument().addDocumentListener(new WordCount());
+        textArea.getDocument().addDocumentListener(new Count());
 
         JScrollPane scrollPane = new JScrollPane(textArea);
         scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -31,17 +31,17 @@ public class Main extends JFrame implements ActionListener
         wordCountLabel = new JLabel("WORD COUNT : 0");
         wordCountLabel.setHorizontalAlignment(SwingConstants.CENTER);
         wordCountLabel.setFont(new Font("Times New Roman", Font.BOLD, 18));
-        wordCountLabel.setForeground(Color.RED);
-
-        charCountLabel = new JLabel("CHARACTER COUNT: 0");
-        charCountLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        charCountLabel.setFont(new Font("Times New Roman", Font.BOLD, 18));
-        charCountLabel.setForeground(Color.BLUE);
+        wordCountLabel.setForeground(Color.CYAN);
 
         sentenceCountLabel = new JLabel("SENTENCE COUNT: 0");
         sentenceCountLabel.setHorizontalAlignment(SwingConstants.CENTER);
         sentenceCountLabel.setFont(new Font("Times New Roman", Font.BOLD, 18));
-        sentenceCountLabel.setForeground(Color.GREEN);
+        sentenceCountLabel.setForeground(Color.MAGENTA);
+
+        charCountLabel = new JLabel("CHARACTER COUNT: 0");
+        charCountLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        charCountLabel.setFont(new Font("Times New Roman", Font.BOLD, 18));
+        charCountLabel.setForeground(Color.DARK_GRAY);
 
         clearButton = new JButton("CLEAR TEXT");
         clearButton.addActionListener(this);
@@ -65,15 +65,15 @@ public class Main extends JFrame implements ActionListener
 
         JPanel countPanel = new JPanel(new GridLayout(3, 1));
         countPanel.add(wordCountLabel);
-        countPanel.add(charCountLabel);
         countPanel.add(sentenceCountLabel);
+        countPanel.add(charCountLabel);
 
         add(scrollPane, BorderLayout.CENTER);
         add(countPanel, BorderLayout.SOUTH);
         add(buttonPanel, BorderLayout.NORTH);
     }
 
-    private class WordCount implements DocumentListener
+    private class Count implements DocumentListener
     {
         public void insertUpdate(DocumentEvent e)
         {
@@ -95,8 +95,8 @@ public class Main extends JFrame implements ActionListener
             if (text.isEmpty())
             {
                 wordCountLabel.setText("WORD COUNT: 0");
-                charCountLabel.setText("CHARACTER COUNT: 0");
                 sentenceCountLabel.setText("SENTENCE COUNT: 0");
+                charCountLabel.setText("CHARACTER COUNT: 0");
             }
 
             else
@@ -106,8 +106,8 @@ public class Main extends JFrame implements ActionListener
                 int charCount = text.length();
                 int sentenceCount = countSentences(text);
                 wordCountLabel.setText("WORD COUNT : " + wordCount);
-                charCountLabel.setText("CHARACTER COUNT: " + charCount);
                 sentenceCountLabel.setText("SENTENCE COUNT: " + sentenceCount);
+                charCountLabel.setText("CHARACTER COUNT: " + charCount);
             }
         }
 
@@ -136,8 +136,8 @@ public class Main extends JFrame implements ActionListener
         {
             textArea.setText("");
             wordCountLabel.setText("WORD COUNT : 0");
-            charCountLabel.setText("CHARACTER COUNT: 0");
             sentenceCountLabel.setText("SENTENCE COUNT: 0");
+            charCountLabel.setText("CHARACTER COUNT: 0");
         }
 
         else if(e.getSource() == exitButton)
