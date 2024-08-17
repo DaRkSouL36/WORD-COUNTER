@@ -23,6 +23,9 @@ public class Main extends JFrame implements ActionListener
         textArea = new JTextArea();
         textArea.setFont(new Font("Times New Roman", Font.BOLD, 16));
 
+        textArea.setLineWrap(true);
+        textArea.setWrapStyleWord(true);
+
         textArea.getDocument().addDocumentListener(new Count());
 
         JScrollPane scrollPane = new JScrollPane(textArea);
