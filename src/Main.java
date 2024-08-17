@@ -8,13 +8,13 @@ import javax.swing.event.DocumentListener;
 public class Main extends JFrame implements ActionListener 
 {
     JTextArea textArea;
-    JLabel wordCountLabel, charCountLabel;
+    JLabel wordCountLabel, charCountLabel, sentenceCountLabel;
     JButton clearButton, exitButton;
     public Main()
     {
         super("WORD COUNTER");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(400, 400);
+        setSize(500, 500);
         setLocationRelativeTo(null);
         setVisible(true);
         setLayout(new BorderLayout());
@@ -38,6 +38,11 @@ public class Main extends JFrame implements ActionListener
         charCountLabel.setFont(new Font("Times New Roman", Font.BOLD, 18));
         charCountLabel.setForeground(Color.BLUE);
 
+        sentenceCountLabel = new JLabel("SENTENCE COUNT: 0");
+        sentenceCountLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        sentenceCountLabel.setFont(new Font("Times New Roman", Font.BOLD, 18));
+        sentenceCountLabel.setForeground(Color.GREEN);
+
         clearButton = new JButton("CLEAR TEXT");
         clearButton.addActionListener(this);
         clearButton.setFont(new Font("Times New Roman", Font.BOLD, 14));
@@ -58,9 +63,10 @@ public class Main extends JFrame implements ActionListener
         buttonPanel.add(clearButton);
         buttonPanel.add(exitButton);
 
-        JPanel countPanel = new JPanel(new GridLayout(2, 1));
+        JPanel countPanel = new JPanel(new GridLayout(3, 1));
         countPanel.add(wordCountLabel);
         countPanel.add(charCountLabel);
+        countPanel.add(sentenceCountLabel);
 
         add(scrollPane, BorderLayout.CENTER);
         add(countPanel, BorderLayout.SOUTH);
@@ -90,6 +96,7 @@ public class Main extends JFrame implements ActionListener
             {
                 wordCountLabel.setText("WORD COUNT: 0");
                 charCountLabel.setText("CHARACTER COUNT: 0");
+                sentenceCountLabel.setText("SENTENCE COUNT: 0");
             }
 
             else
@@ -97,9 +104,28 @@ public class Main extends JFrame implements ActionListener
                 String[] words = text.split("\\s+");
                 int wordCount = words.length;
                 int charCount = text.length();
+                int sentenceCount = countSentences(text);
                 wordCountLabel.setText("WORD COUNT : " + wordCount);
                 charCountLabel.setText("CHARACTER COUNT: " + charCount);
+                sentenceCountLabel.setText("SENTENCE COUNT: " + sentenceCount);
             }
+        }
+
+        private int countSentences(String text)
+        {
+            if(text.isEmpty())
+                return 0;
+
+            String[] sentences = text.split("[.!?](?=\\s)");
+            int sentenceCount = 0;
+
+            for(String element : sentences)
+            {
+                if(!element.trim().isEmpty())
+                    sentenceCount++;
+            }
+
+            return sentenceCount;
         }
     }
 
@@ -111,6 +137,7 @@ public class Main extends JFrame implements ActionListener
             textArea.setText("");
             wordCountLabel.setText("WORD COUNT : 0");
             charCountLabel.setText("CHARACTER COUNT: 0");
+            sentenceCountLabel.setText("SENTENCE COUNT: 0");
         }
 
         else if(e.getSource() == exitButton)
