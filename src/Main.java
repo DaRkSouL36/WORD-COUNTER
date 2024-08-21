@@ -76,6 +76,26 @@ public class Main extends JFrame implements ActionListener
         add(scrollPane, BorderLayout.CENTER);
         add(countPanel, BorderLayout.SOUTH);
         add(buttonPanel, BorderLayout.NORTH);
+
+        JMenuBar menuBar = new JMenuBar();
+
+        JMenu fileMenu = new JMenu("FILE");
+        JMenuItem openItem = new JMenuItem("OPEN");
+        JMenuItem saveItem = new JMenuItem("SAVE");
+        fileMenu.add(openItem);
+        fileMenu.add(saveItem);
+        menuBar.add(fileMenu);
+
+        JMenu editMenu = new JMenu("EDIT");
+        JMenuItem undoItem = new JMenuItem("UNDO");
+        JMenuItem redoItem = new JMenuItem("REDO");
+        JMenuItem findReplaceItem = new JMenuItem("FIND & REPLACE");
+        editMenu.add(undoItem);
+        editMenu.add(redoItem);
+        editMenu.add(findReplaceItem);
+        menuBar.add(editMenu);
+
+        setJMenuBar(menuBar);
     }
 
     private class Count implements DocumentListener
