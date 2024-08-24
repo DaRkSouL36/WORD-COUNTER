@@ -57,6 +57,7 @@ public class Main extends JFrame implements ActionListener
         clearButton.setForeground(Color.WHITE);
         clearButton.setBackground(new Color(30, 144, 255));
         clearButton.setFocusPainted(false);
+        clearButton.setToolTipText("CLEAR ALL TEXT IN THE TEXT AREA");
 
         exitButton = new JButton("EXIT");
         exitButton.addActionListener(this);
@@ -64,6 +65,7 @@ public class Main extends JFrame implements ActionListener
         exitButton.setForeground(Color.WHITE);
         exitButton.setBackground(new Color(220, 20, 60));
         exitButton.setFocusPainted(false);
+        exitButton.setToolTipText("EXIT THE APPLICATION");
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
