@@ -13,6 +13,7 @@ public class Main extends JFrame implements ActionListener
     JTextArea textArea;
     JLabel charCountLabel, wordCountLabel, sentenceCountLabel;
     JButton clearButton, exitButton, darkModeButton;
+    JPanel buttonPanel, countPanel;
     UndoManager undoManager;
     boolean isDarkMode = false;
     public Main()
@@ -76,14 +77,14 @@ public class Main extends JFrame implements ActionListener
         darkModeButton.setFocusPainted(false);
         darkModeButton.setToolTipText("TOGGLE DARK MODE");
 
-        JPanel buttonPanel = new JPanel();
+        buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.setBackground(Color.WHITE);
         buttonPanel.add(clearButton);
         buttonPanel.add(exitButton);
         buttonPanel.add(darkModeButton);
 
-        JPanel countPanel = new JPanel(new BorderLayout());
+        countPanel = new JPanel(new BorderLayout());
         countPanel.setBorder(new EmptyBorder(10, 20, 10, 20));
         countPanel.add(charCountLabel, BorderLayout.WEST);
         countPanel.add(wordCountLabel, BorderLayout.CENTER);
@@ -228,6 +229,7 @@ public class Main extends JFrame implements ActionListener
             case "FIND & REPLACE" -> showFindAndReplaceDialog();
             case "CLEAR TEXT" -> textArea.setText("");
             case "EXIT" -> System.exit(0);
+            case "DARK MODE" -> toggleDarkMode();
         }
     }
 
@@ -251,6 +253,31 @@ public class Main extends JFrame implements ActionListener
         }
     }
 
+    private void toggleDarkMode()
+    {
+        isDarkMode = !isDarkMode;
+
+        if(isDarkMode)
+        {
+            textArea.setBackground(Color.BLACK);
+            textArea.setForeground(Color.WHITE);
+            charCountLabel.setForeground(Color.WHITE);
+            wordCountLabel.setForeground(Color.WHITE);
+            sentenceCountLabel.setForeground(Color.WHITE);
+            countPanel.setBackground(Color.DARK_GRAY);
+            buttonPanel.setBackground(Color.DARK_GRAY);
+        }
+        else
+        {
+            textArea.setBackground(Color.WHITE);
+            textArea.setForeground(Color.BLACK);
+            charCountLabel.setForeground(Color.DARK_GRAY);
+            wordCountLabel.setForeground(Color.DARK_GRAY);
+            sentenceCountLabel.setForeground(Color.DARK_GRAY);
+            countPanel.setBackground(Color.WHITE);
+            buttonPanel.setBackground(Color.WHITE);
+        }
+    }
     public static void main(String[] args)
     {
         SwingUtilities.invokeLater(Main::new);
