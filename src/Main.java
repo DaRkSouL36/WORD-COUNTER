@@ -12,8 +12,9 @@ public class Main extends JFrame implements ActionListener
 {
     JTextArea textArea;
     JLabel charCountLabel, wordCountLabel, sentenceCountLabel;
-    JButton clearButton, exitButton;
+    JButton clearButton, exitButton, darkModeButton;
     UndoManager undoManager;
+    boolean isDarkMode = false;
     public Main()
     {
         super("WORD COUNTER");
@@ -55,7 +56,7 @@ public class Main extends JFrame implements ActionListener
         clearButton.addActionListener(this);
         clearButton.setFont(new Font("Times New Roman", Font.BOLD, 14));
         clearButton.setForeground(Color.WHITE);
-        clearButton.setBackground(new Color(30, 144, 255));
+        clearButton.setBackground(Color.BLUE);
         clearButton.setFocusPainted(false);
         clearButton.setToolTipText("CLEAR ALL TEXT IN THE TEXT AREA");
 
@@ -63,15 +64,24 @@ public class Main extends JFrame implements ActionListener
         exitButton.addActionListener(this);
         exitButton.setFont(new Font("Times New Roman", Font.BOLD, 14));
         exitButton.setForeground(Color.WHITE);
-        exitButton.setBackground(new Color(220, 20, 60));
+        exitButton.setBackground(Color.RED);
         exitButton.setFocusPainted(false);
         exitButton.setToolTipText("EXIT THE APPLICATION");
+
+        darkModeButton = new JButton("DARK MODE");
+        darkModeButton.addActionListener(this);
+        darkModeButton.setFont(new Font("Times New Roman", Font.BOLD, 14));
+        darkModeButton.setForeground(Color.WHITE);
+        darkModeButton.setBackground(Color.DARK_GRAY);
+        darkModeButton.setFocusPainted(false);
+        darkModeButton.setToolTipText("TOGGLE DARK MODE");
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.setBackground(Color.WHITE);
         buttonPanel.add(clearButton);
         buttonPanel.add(exitButton);
+        buttonPanel.add(darkModeButton);
 
         JPanel countPanel = new JPanel(new BorderLayout());
         countPanel.setBorder(new EmptyBorder(10, 20, 10, 20));
