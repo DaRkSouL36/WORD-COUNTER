@@ -1,285 +1,314 @@
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.undo.UndoManager;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.*;
+import javax.swing.*; // IMPORT SWING LIBRARY FOR GUI COMPONENTS
+import javax.swing.border.EmptyBorder; // IMPORT FOR BORDER STYLES
+import javax.swing.event.DocumentEvent; // IMPORT FOR DOCUMENT EVENT HANDLING
+import javax.swing.event.DocumentListener; // IMPORT FOR DOCUMENT LISTENER INTERFACE
+import javax.swing.filechooser.FileNameExtensionFilter; // IMPORT FOR FILE FILTERING IN FILE CHOOSER
+import javax.swing.undo.UndoManager; // IMPORT FOR UNDO/REDO FUNCTIONALITY
+import java.awt.*; // IMPORT FOR AWT (ABSTRACT WINDOW TOOLKIT) COMPONENTS
+import java.awt.event.ActionEvent; // IMPORT FOR ACTION EVENT HANDLING
+import java.awt.event.ActionListener; // IMPORT FOR ACTION LISTENER INTERFACE
+import java.io.*; // IMPORT FOR FILE HANDLING
+
 public class Main extends JFrame implements ActionListener 
 {
-    JTextArea textArea;
-    JLabel charCountLabel, wordCountLabel, sentenceCountLabel;
-    JButton clearButton, exitButton, darkModeButton;
-    JPanel buttonPanel, countPanel;
-    UndoManager undoManager;
-    boolean isDarkMode = false;
+    // DECLARING GUI COMPONENTS (TEXTAREA, LABELS, BUTTONS, PANELS, ETC.)
+    JTextArea textArea; // TEXTAREA FOR ENTERING AND DISPLAYING TEXT
+    JLabel charCountLabel, wordCountLabel, sentenceCountLabel; // LABELS TO DISPLAY CHARACTER, WORD, AND SENTENCE COUNTS
+    JButton clearButton, exitButton, darkModeButton; // BUTTONS FOR CLEARING TEXT, EXITING, AND TOGGLING DARK MODE
+    JPanel buttonPanel, countPanel; // PANELS FOR LAYOUT OF BUTTONS AND COUNTS
+    UndoManager undoManager; // UNDO MANAGER TO HANDLE UNDO/REDO ACTIONS
+    boolean isDarkMode = false; // FLAG TO TOGGLE DARK MODE
+
+    // CONSTRUCTOR TO SET UP THE FRAME AND INITIALIZE COMPONENTS
     public Main()
     {
-        super("WORD COUNTER");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1000, 500);
-        setLocationRelativeTo(null);
-        setVisible(true);
-        setLayout(new BorderLayout());
-        getContentPane().setBackground(Color.WHITE);
+        super("WORD COUNTER"); // SET FRAME TITLE
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // CLOSE APPLICATION ON WINDOW CLOSE
+        setSize(1000, 500); // SET WINDOW SIZE (WIDTH: 1000px, HEIGHT: 500px)
+        setLocationRelativeTo(null); // CENTER THE FRAME ON SCREEN
+        setVisible(true); // MAKE THE FRAME VISIBLE
+        setLayout(new BorderLayout()); // SET THE FRAME'S LAYOUT TO BORDER LAYOUT
+        getContentPane().setBackground(Color.WHITE); // SET BACKGROUND COLOR OF THE FRAME TO WHITE
 
+        // INITIALIZE TEXT AREA
         textArea = new JTextArea();
-        textArea.setFont(new Font("Times New Roman", Font.BOLD, 16));
-        textArea.setLineWrap(true);
-        textArea.setWrapStyleWord(true);
+        textArea.setFont(new Font("Times New Roman", Font.BOLD, 16)); // SET FONT TO TIMES NEW ROMAN, BOLD, SIZE 16
+        textArea.setLineWrap(true); // ENABLE LINE WRAPPING IN THE TEXT AREA
+        textArea.setWrapStyleWord(true); // ENABLE WORD-WRAPPING IN THE TEXT AREA
 
+        // INITIALIZE UNDO MANAGER TO HANDLE UNDO AND REDO ACTIONS
         undoManager = new UndoManager();
-        textArea.getDocument().addUndoableEditListener(undoManager);
-        textArea.getDocument().addDocumentListener(new Count());
+        textArea.getDocument().addUndoableEditListener(undoManager); // ATTACH UNDO MANAGER TO DOCUMENT CHANGES
+        textArea.getDocument().addDocumentListener(new Count()); // ADD DOCUMENT LISTENER TO UPDATE COUNTS
 
+        // CREATE A SCROLLPANE TO HOLD THE TEXT AREA (SCROLLING TEXT)
         JScrollPane scrollPane = new JScrollPane(textArea);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // ADD PADDING TO SCROLLPANE BORDER
 
+        // INITIALIZE LABELS FOR CHARACTER COUNT, WORD COUNT, AND SENTENCE COUNT
         charCountLabel = new JLabel("CHARACTER COUNT : 0");
-        charCountLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        charCountLabel.setFont(new Font("Times New Roman", Font.BOLD, 18));
-        charCountLabel.setForeground(Color.DARK_GRAY);
+        charCountLabel.setHorizontalAlignment(SwingConstants.CENTER); // CENTER ALIGN TEXT
+        charCountLabel.setFont(new Font("Times New Roman", Font.BOLD, 18)); // SET FONT SIZE AND STYLE
+        charCountLabel.setForeground(Color.DARK_GRAY); // SET TEXT COLOR TO DARK GRAY
 
         wordCountLabel = new JLabel("WORD COUNT : 0");
-        wordCountLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        wordCountLabel.setFont(new Font("Times New Roman", Font.BOLD, 18));
-        wordCountLabel.setForeground(Color.DARK_GRAY);
+        wordCountLabel.setHorizontalAlignment(SwingConstants.CENTER); // CENTER ALIGN TEXT
+        wordCountLabel.setFont(new Font("Times New Roman", Font.BOLD, 18)); // SET FONT SIZE AND STYLE
+        wordCountLabel.setForeground(Color.DARK_GRAY); // SET TEXT COLOR TO DARK GRAY
 
         sentenceCountLabel = new JLabel("SENTENCE COUNT : 0");
-        sentenceCountLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        sentenceCountLabel.setFont(new Font("Times New Roman", Font.BOLD, 18));
-        sentenceCountLabel.setForeground(Color.DARK_GRAY);
+        sentenceCountLabel.setHorizontalAlignment(SwingConstants.CENTER); // CENTER ALIGN TEXT
+        sentenceCountLabel.setFont(new Font("Times New Roman", Font.BOLD, 18)); // SET FONT SIZE AND STYLE
+        sentenceCountLabel.setForeground(Color.DARK_GRAY); // SET TEXT COLOR TO DARK GRAY
 
+        // INITIALIZE BUTTONS FOR CLEARING TEXT, EXITING, AND TOGGLING DARK MODE
         clearButton = new JButton("CLEAR TEXT");
-        clearButton.addActionListener(this);
-        clearButton.setFont(new Font("Times New Roman", Font.BOLD, 14));
-        clearButton.setForeground(Color.WHITE);
-        clearButton.setBackground(Color.BLUE);
-        clearButton.setFocusPainted(false);
-        clearButton.setToolTipText("CLEAR ALL TEXT IN THE TEXT AREA");
+        clearButton.addActionListener(this); // ADD ACTION LISTENER FOR CLEAR BUTTON
+        clearButton.setFont(new Font("Times New Roman", Font.BOLD, 14)); // SET FONT STYLE AND SIZE
+        clearButton.setForeground(Color.WHITE); // SET BUTTON TEXT COLOR
+        clearButton.setBackground(Color.BLUE); // SET BUTTON BACKGROUND COLOR
+        clearButton.setFocusPainted(false); // REMOVE FOCUS PAINT
+        clearButton.setToolTipText("CLEAR ALL TEXT IN THE TEXT AREA"); // SET TOOLTIP TEXT
 
         exitButton = new JButton("EXIT");
-        exitButton.addActionListener(this);
-        exitButton.setFont(new Font("Times New Roman", Font.BOLD, 14));
-        exitButton.setForeground(Color.WHITE);
-        exitButton.setBackground(Color.RED);
-        exitButton.setFocusPainted(false);
-        exitButton.setToolTipText("EXIT THE APPLICATION");
+        exitButton.addActionListener(this); // ADD ACTION LISTENER FOR EXIT BUTTON
+        exitButton.setFont(new Font("Times New Roman", Font.BOLD, 14)); // SET FONT STYLE AND SIZE
+        exitButton.setForeground(Color.WHITE); // SET BUTTON TEXT COLOR
+        exitButton.setBackground(Color.RED); // SET BUTTON BACKGROUND COLOR
+        exitButton.setFocusPainted(false); // REMOVE FOCUS PAINT
+        exitButton.setToolTipText("EXIT THE APPLICATION"); // SET TOOLTIP TEXT
 
         darkModeButton = new JButton("DARK MODE");
-        darkModeButton.addActionListener(this);
-        darkModeButton.setFont(new Font("Times New Roman", Font.BOLD, 14));
-        darkModeButton.setForeground(Color.WHITE);
-        darkModeButton.setBackground(Color.DARK_GRAY);
-        darkModeButton.setFocusPainted(false);
-        darkModeButton.setToolTipText("TOGGLE DARK MODE");
+        darkModeButton.addActionListener(this); // ADD ACTION LISTENER FOR DARK MODE BUTTON
+        darkModeButton.setFont(new Font("Times New Roman", Font.BOLD, 14)); // SET FONT STYLE AND SIZE
+        darkModeButton.setForeground(Color.WHITE); // SET BUTTON TEXT COLOR
+        darkModeButton.setBackground(Color.DARK_GRAY); // SET BUTTON BACKGROUND COLOR
+        darkModeButton.setFocusPainted(false); // REMOVE FOCUS PAINT
+        darkModeButton.setToolTipText("TOGGLE DARK MODE"); // SET TOOLTIP TEXT
 
+        // CREATE BUTTON PANEL AND ADD BUTTONS
         buttonPanel = new JPanel();
-        buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
-        buttonPanel.setBackground(Color.WHITE);
-        buttonPanel.add(clearButton);
-        buttonPanel.add(exitButton);
-        buttonPanel.add(darkModeButton);
+        buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER)); // CENTER BUTTONS IN PANEL
+        buttonPanel.setBackground(Color.WHITE); // SET BUTTON PANEL BACKGROUND TO WHITE
+        buttonPanel.add(clearButton); // ADD CLEAR BUTTON
+        buttonPanel.add(exitButton); // ADD EXIT BUTTON
+        buttonPanel.add(darkModeButton); // ADD DARK MODE BUTTON
 
+        // CREATE PANEL TO DISPLAY COUNTS AND ADD LABELS
         countPanel = new JPanel(new BorderLayout());
-        countPanel.setBorder(new EmptyBorder(10, 20, 10, 20));
-        countPanel.add(charCountLabel, BorderLayout.WEST);
-        countPanel.add(wordCountLabel, BorderLayout.CENTER);
-        countPanel.add(sentenceCountLabel, BorderLayout.EAST);
+        countPanel.setBorder(new EmptyBorder(10, 20, 10, 20)); // ADD PADDING TO PANEL
+        countPanel.add(charCountLabel, BorderLayout.WEST); // ADD CHARACTER COUNT LABEL
+        countPanel.add(wordCountLabel, BorderLayout.CENTER); // ADD WORD COUNT LABEL
+        countPanel.add(sentenceCountLabel, BorderLayout.EAST); // ADD SENTENCE COUNT LABEL
 
-        add(scrollPane, BorderLayout.CENTER);
-        add(countPanel, BorderLayout.SOUTH);
-        add(buttonPanel, BorderLayout.NORTH);
+        // ADD COMPONENTS TO MAIN FRAME
+        add(scrollPane, BorderLayout.CENTER); // ADD SCROLLPANE TO CENTER
+        add(countPanel, BorderLayout.SOUTH); // ADD COUNT PANEL TO SOUTH
+        add(buttonPanel, BorderLayout.NORTH); // ADD BUTTON PANEL TO NORTH
 
+        // CREATE MENU BAR
         JMenuBar menuBar = new JMenuBar();
 
+        // FILE MENU WITH OPEN AND SAVE OPTIONS
         JMenu fileMenu = new JMenu("FILE");
         JMenuItem openItem = new JMenuItem("OPEN");
         JMenuItem saveItem = new JMenuItem("SAVE");
-        fileMenu.add(openItem);
-        fileMenu.add(saveItem);
-        menuBar.add(fileMenu);
-        openItem.addActionListener(this);
-        saveItem.addActionListener(this);
+        fileMenu.add(openItem); // ADD OPEN ITEM TO FILE MENU
+        fileMenu.add(saveItem); // ADD SAVE ITEM TO FILE MENU
+        menuBar.add(fileMenu); // ADD FILE MENU TO MENU BAR
+        openItem.addActionListener(this); // ADD ACTION LISTENER FOR OPEN
+        saveItem.addActionListener(this); // ADD ACTION LISTENER FOR SAVE
 
+        // EDIT MENU WITH UNDO, REDO, AND FIND & REPLACE OPTIONS
         JMenu editMenu = new JMenu("EDIT");
         JMenuItem undoItem = new JMenuItem("UNDO");
         JMenuItem redoItem = new JMenuItem("REDO");
         JMenuItem findReplaceItem = new JMenuItem("FIND & REPLACE");
-        editMenu.add(undoItem);
-        editMenu.add(redoItem);
-        editMenu.add(findReplaceItem);
-        menuBar.add(editMenu);
-        undoItem.addActionListener(this);
-        redoItem.addActionListener(this);
-        findReplaceItem.addActionListener(this);
+        editMenu.add(undoItem); // ADD UNDO ITEM TO EDIT MENU
+        editMenu.add(redoItem); // ADD REDO ITEM TO EDIT MENU
+        editMenu.add(findReplaceItem); // ADD FIND & REPLACE ITEM TO EDIT MENU
+        menuBar.add(editMenu); // ADD EDIT MENU TO MENU BAR
+        undoItem.addActionListener(this); // ADD ACTION LISTENER FOR UNDO
+        redoItem.addActionListener(this); // ADD ACTION LISTENER FOR REDO
+        findReplaceItem.addActionListener(this); // ADD ACTION LISTENER FOR FIND & REPLACE
 
+        // SET MENU BAR
         setJMenuBar(menuBar);
     }
 
+    // DOCUMENT LISTENER TO TRACK TEXT CHANGES
     private class Count implements DocumentListener
     {
+        // ACTION WHEN TEXT IS INSERTED
         public void insertUpdate(DocumentEvent e)
         {
-            updateCount();
+            updateCount(); // UPDATE COUNTS ON INSERT
         }
+
+        // ACTION WHEN TEXT IS REMOVED
         public void removeUpdate(DocumentEvent e)
         {
-            updateCount();
+            updateCount(); // UPDATE COUNTS ON REMOVE
         }
+
+        // ACTION WHEN DOCUMENT IS CHANGED
         public void changedUpdate(DocumentEvent e)
         {
-            updateCount();
+            updateCount(); // UPDATE COUNTS ON CHANGE
         }
 
+        // UPDATE COUNTS FOR CHARACTERS, WORDS, AND SENTENCES
         private void updateCount()
         {
-            String text = textArea.getText().trim();
+            String text = textArea.getText().trim(); // GET TEXT FROM TEXTAREA
 
-            if(text.isEmpty())
+            if(text.isEmpty()) // IF TEXT AREA IS EMPTY
             {
-                charCountLabel.setText("CHARACTER COUNT : 0");
-                wordCountLabel.setText("WORD COUNT : 0");
-                sentenceCountLabel.setText("SENTENCE COUNT : 0");
+                charCountLabel.setText("CHARACTER COUNT : 0"); // SET CHAR COUNT TO 0
+                wordCountLabel.setText("WORD COUNT : 0"); // SET WORD COUNT TO 0
+                sentenceCountLabel.setText("SENTENCE COUNT : 0"); // SET SENTENCE COUNT TO 0
             }
-
             else
             {
-                String[] words = text.split("\\s+");
-                int wordCount = words.length;
-                int charCount = text.length();
-                int sentenceCount = countSentences(text);
-                charCountLabel.setText("CHARACTER COUNT : " + charCount);
-                wordCountLabel.setText("WORD COUNT : " + wordCount);
-                sentenceCountLabel.setText("SENTENCE COUNT : " + sentenceCount);
+                String[] words = text.split("\\s+"); // SPLIT TEXT INTO WORDS
+                int wordCount = words.length; // COUNT WORDS
+                int charCount = text.length(); // COUNT CHARACTERS
+                int sentenceCount = countSentences(text); // COUNT SENTENCES
+                charCountLabel.setText("CHARACTER COUNT : " + charCount); // UPDATE CHAR COUNT LABEL
+                wordCountLabel.setText("WORD COUNT : " + wordCount); // UPDATE WORD COUNT LABEL
+                sentenceCountLabel.setText("SENTENCE COUNT : " + sentenceCount); // UPDATE SENTENCE COUNT LABEL
             }
         }
 
+        // COUNT SENTENCES BASED ON PUNCTUATION MARKS
         private int countSentences(String text)
         {
-            if(text.isEmpty())
+            if(text.isEmpty()) // IF TEXT IS EMPTY, NO SENTENCES
                 return 0;
 
-            String[] sentences = text.split("[.!?](?=\\s)");
+            String[] sentences = text.split("[.!?](?=\\s)"); // SPLIT TEXT BY PERIOD, EXCLAMATION MARK, OR QUESTION MARK
             int sentenceCount = 0;
 
+            // COUNT NON-EMPTY SENTENCES
             for(String element : sentences)
             {
                 if(!element.trim().isEmpty())
                     sentenceCount++;
             }
 
-            return sentenceCount;
+            return sentenceCount; // RETURN SENTENCE COUNT
         }
     }
 
+    // ACTION HANDLER FOR BUTTON AND MENU ACTIONS
     public void actionPerformed(ActionEvent e)
     {
-        String command = e.getActionCommand();
+        String command = e.getActionCommand(); // GET ACTION COMMAND (BUTTON/MENU ITEM)
 
         switch(command)
         {
-            case "OPEN" ->
+            case "OPEN" -> // OPEN FILE
             {
                 JFileChooser fileChooser = new JFileChooser();
-                fileChooser.setFileFilter(new FileNameExtensionFilter("TEXT FILE", "txt"));
-                int option = fileChooser.showOpenDialog(this);
-                if(option == JFileChooser.APPROVE_OPTION)
+                fileChooser.setFileFilter(new FileNameExtensionFilter("TEXT FILE", "txt")); // FILTER TEXT FILES
+                int option = fileChooser.showOpenDialog(this); // OPEN FILE DIALOG
+                if(option == JFileChooser.APPROVE_OPTION) // IF FILE SELECTED
                 {
                     try(BufferedReader reader = new BufferedReader(new FileReader(fileChooser.getSelectedFile())))
                     {
-                        textArea.read(reader, null);
+                        textArea.read(reader, null); // READ FILE CONTENT INTO TEXTAREA
                     }
-                    catch(IOException ex)
+                    catch(IOException ex) // HANDLE EXCEPTION
                     {
                         ex.printStackTrace();
                     }
                 }
             }
-            case "SAVE" ->
+            case "SAVE" -> // SAVE FILE
             {
                 JFileChooser fileChooser = new JFileChooser();
-                fileChooser.setFileFilter(new FileNameExtensionFilter("TEXT FILE", "txt"));
-                int option = fileChooser.showSaveDialog(this);
-                if(option == JFileChooser.APPROVE_OPTION)
+                fileChooser.setFileFilter(new FileNameExtensionFilter("TEXT FILE", "txt")); // FILTER TEXT FILES
+                int option = fileChooser.showSaveDialog(this); // SHOW SAVE DIALOG
+                if(option == JFileChooser.APPROVE_OPTION) // IF FILE SELECTED
                 {
                     try(BufferedWriter writer = new BufferedWriter(new FileWriter(fileChooser.getSelectedFile())))
                     {
-                        textArea.write(writer);
+                        textArea.write(writer); // WRITE TEXT AREA CONTENT TO FILE
                     }
-                    catch(IOException ex)
+                    catch(IOException ex) // HANDLE EXCEPTION
                     {
                         ex.printStackTrace();
                     }
                 }
             }
-            case "UNDO" ->
+            case "UNDO" -> // UNDO LAST ACTION
             {
-                if(undoManager.canUndo())
-                    undoManager.undo();
+                if(undoManager.canUndo()) // IF UNDO IS POSSIBLE
+                    undoManager.undo(); // PERFORM UNDO ACTION
             }
-            case "REDO" ->
+            case "REDO" -> // REDO LAST ACTION
             {
-                if(undoManager.canRedo())
-                    undoManager.redo();
+                if(undoManager.canRedo()) // IF REDO IS POSSIBLE
+                    undoManager.redo(); // PERFORM REDO ACTION
             }
-            case "FIND & REPLACE" -> showFindAndReplaceDialog();
-            case "CLEAR TEXT" -> textArea.setText("");
-            case "EXIT" -> System.exit(0);
-            case "DARK MODE" -> toggleDarkMode();
+            case "FIND & REPLACE" -> showFindAndReplaceDialog(); // SHOW FIND & REPLACE DIALOG
+            case "CLEAR TEXT" -> textArea.setText(""); // CLEAR TEXTAREA CONTENT
+            case "EXIT" -> System.exit(0); // EXIT THE APPLICATION
+            case "DARK MODE" -> toggleDarkMode(); // TOGGLE DARK MODE
         }
     }
 
+    // SHOW FIND AND REPLACE DIALOG
     private void showFindAndReplaceDialog()
     {
-        JPanel panel = new JPanel(new GridLayout(2, 2));
-        JTextField findField = new JTextField(10);
-        JTextField replaceField = new JTextField(10);
+        JPanel panel = new JPanel(new GridLayout(2, 2)); // CREATE PANEL WITH GRID LAYOUT
+        JTextField findField = new JTextField(10); // TEXT FIELD FOR FIND TEXT
+        JTextField replaceField = new JTextField(10); // TEXT FIELD FOR REPLACE TEXT
 
-        panel.add(new JLabel("FIND"));
-        panel.add(findField);
-        panel.add(new JLabel("REPLACE"));
-        panel.add(replaceField);
+        panel.add(new JLabel("FIND")); // ADD LABEL FOR FIND
+        panel.add(findField); // ADD FIND TEXT FIELD
+        panel.add(new JLabel("REPLACE")); // ADD LABEL FOR REPLACE
+        panel.add(replaceField); // ADD REPLACE TEXT FIELD
 
-        int result = JOptionPane.showConfirmDialog(this, panel, "FIND & REPLACE", JOptionPane.OK_CANCEL_OPTION);
-        if(result == JOptionPane.OK_OPTION)
+        int result = JOptionPane.showConfirmDialog(this, panel, "FIND & REPLACE", JOptionPane.OK_CANCEL_OPTION); // SHOW DIALOG
+        if(result == JOptionPane.OK_OPTION) // IF OK PRESSED
         {
-            String findText = findField.getText();
-            String replaceText = replaceField.getText();
-            textArea.setText(textArea.getText().replace(findText, replaceText));
+            String findText = findField.getText(); // GET TEXT TO FIND
+            String replaceText = replaceField.getText(); // GET TEXT TO REPLACE
+            textArea.setText(textArea.getText().replace(findText, replaceText)); // REPLACE TEXT IN TEXTAREA
         }
     }
 
+    // TOGGLE BETWEEN DARK AND LIGHT MODE
     private void toggleDarkMode()
     {
-        isDarkMode = !isDarkMode;
+        isDarkMode = !isDarkMode; // TOGGLE DARK MODE FLAG
 
-        if(isDarkMode)
+        if(isDarkMode) // IF DARK MODE ENABLED
         {
-            textArea.setBackground(Color.BLACK);
-            textArea.setForeground(Color.WHITE);
-            charCountLabel.setForeground(Color.WHITE);
-            wordCountLabel.setForeground(Color.WHITE);
-            sentenceCountLabel.setForeground(Color.WHITE);
-            countPanel.setBackground(Color.DARK_GRAY);
-            buttonPanel.setBackground(Color.DARK_GRAY);
+            textArea.setBackground(Color.BLACK); // SET TEXTAREA BACKGROUND TO BLACK
+            textArea.setForeground(Color.WHITE); // SET TEXTAREA TEXT COLOR TO WHITE
+            charCountLabel.setForeground(Color.WHITE); // SET LABEL TEXT TO WHITE
+            wordCountLabel.setForeground(Color.WHITE); // SET LABEL TEXT TO WHITE
+            sentenceCountLabel.setForeground(Color.WHITE); // SET LABEL TEXT TO WHITE
+            countPanel.setBackground(Color.DARK_GRAY); // SET COUNT PANEL BACKGROUND TO DARK GRAY
+            buttonPanel.setBackground(Color.DARK_GRAY); // SET BUTTON PANEL BACKGROUND TO DARK GRAY
         }
-        else
+        else // IF LIGHT MODE ENABLED
         {
-            textArea.setBackground(Color.WHITE);
-            textArea.setForeground(Color.BLACK);
-            charCountLabel.setForeground(Color.DARK_GRAY);
-            wordCountLabel.setForeground(Color.DARK_GRAY);
-            sentenceCountLabel.setForeground(Color.DARK_GRAY);
-            countPanel.setBackground(Color.WHITE);
-            buttonPanel.setBackground(Color.WHITE);
+            textArea.setBackground(Color.WHITE); // SET TEXTAREA BACKGROUND TO WHITE
+            textArea.setForeground(Color.BLACK); // SET TEXTAREA TEXT COLOR TO BLACK
+            charCountLabel.setForeground(Color.DARK_GRAY); // SET LABEL TEXT TO DARK GRAY
+            wordCountLabel.setForeground(Color.DARK_GRAY); // SET LABEL TEXT TO DARK GRAY
+            sentenceCountLabel.setForeground(Color.DARK_GRAY); // SET LABEL TEXT TO DARK GRAY
+            countPanel.setBackground(Color.WHITE); // SET COUNT PANEL BACKGROUND TO WHITE
+            buttonPanel.setBackground(Color.WHITE); // SET BUTTON PANEL BACKGROUND TO WHITE
         }
     }
+
+    // MAIN METHOD TO RUN THE APPLICATION
     public static void main(String[] args)
     {
-        SwingUtilities.invokeLater(Main::new);
+        SwingUtilities.invokeLater(Main::new); // RUN THE APPLICATION ON EVENT DISPATCH THREAD
     }
 }
