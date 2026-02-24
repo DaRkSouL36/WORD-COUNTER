@@ -146,12 +146,17 @@ public class Main extends JFrame implements ActionListener
         redoItem.addActionListener(this); // ADD ACTION LISTENER FOR REDO
         findReplaceItem.addActionListener(this); // ADD ACTION LISTENER FOR FIND & REPLACE
 
-        // FORMAT MENU FOR FONT CUSTOMIZATION
+        // FORMAT MENU FOR FONT AND COLOR CUSTOMIZATION
         JMenu formatMenu = new JMenu("FORMAT");
         JMenuItem fontItem = new JMenuItem("FONT...");
+        JMenuItem colorItem = new JMenuItem("COLOR...");
+
         formatMenu.add(fontItem);
+        formatMenu.add(colorItem);
         menuBar.add(formatMenu);
-        fontItem.addActionListener(this); // ADD ACTION LISTENER FOR FONT OPTION
+
+        fontItem.addActionListener(this);   // ADD ACTION LISTENER FOR FONT
+        colorItem.addActionListener(this);  // ADD ACTION LISTENER FOR COLOR
 
         // SET MENU BAR
         setJMenuBar(menuBar);
@@ -273,6 +278,7 @@ public class Main extends JFrame implements ActionListener
                     undoManager.redo(); // PERFORM REDO ACTION
             }
             case "FONT..." -> showFontChooser(); // OPEN FONT SELECTION DIALOG
+            case "COLOR..." -> showColorChooser(); // OPEN COLOR SELECTION DIALOG
             case "FIND & REPLACE" -> showFindAndReplaceDialog(); // SHOW FIND & REPLACE DIALOG
             case "CLEAR TEXT" -> textArea.setText(""); // CLEAR TEXTAREA CONTENT
             case "EXIT" -> System.exit(0); // EXIT THE APPLICATION
@@ -334,6 +340,19 @@ public class Main extends JFrame implements ActionListener
             wordCountLabel.setFont(newFont);
             sentenceCountLabel.setFont(newFont);
             statusBar.setFont(newFont); // ALSO UPDATE STATUS BAR
+        }
+    }
+
+    // SHOW COLOR SELECTION DIALOG
+    private void showColorChooser()
+    {
+        // OPEN COLOR CHOOSER WITH CURRENT TEXT COLOR AS DEFAULT
+        Color newColor = JColorChooser.showDialog(this, "SELECT TEXT COLOR", textArea.getForeground());
+
+        // APPLY SELECTED COLOR IF USER DID NOT CANCEL
+        if(newColor != null)
+        {
+            textArea.setForeground(newColor);
         }
     }
 
