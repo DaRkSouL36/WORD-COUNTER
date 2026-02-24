@@ -1,3 +1,4 @@
+import java.util.*; // IMPORT FOR COLLECTIONS USED IN SENTENCE COUNTING
 import javax.swing.*; // IMPORT SWING LIBRARY FOR GUI COMPONENTS
 import javax.swing.border.EmptyBorder; // IMPORT FOR BORDER STYLES
 import javax.swing.event.DocumentEvent; // IMPORT FOR DOCUMENT EVENT HANDLING
@@ -206,23 +207,59 @@ public class Main extends JFrame implements ActionListener
             }
         }
 
-        // COUNT SENTENCES BASED ON PUNCTUATION MARKS
+        // COUNT SENTENCES WITH BASIC ABBREVIATION HANDLING
         private int countSentences(String text)
         {
-            if(text.isEmpty()) // IF TEXT IS EMPTY, NO SENTENCES
+            if(text.isEmpty())
                 return 0;
 
-            String[] sentences = text.split("[.!?](?=\\s)"); // SPLIT TEXT BY PERIOD, EXCLAMATION MARK, OR QUESTION MARK
+            // LIST OF COMMON ABBREVIATIONS
+            String[] abbreviations = {"Mr.", "Mrs.", "Ms.", "Dr.", "Prof.", "Sr.", "Jr."};
+            Set<String> abbreviationSet = new HashSet<>(Arrays.asList(abbreviations));
+
+            // SPLIT TEXT AT SENTENCE ENDINGS
+            String[] parts = text.split("(?<=[.!?])\\s+");
             int sentenceCount = 0;
 
-            // COUNT NON-EMPTY SENTENCES
-            for(String element : sentences)
+            for(int i = 0; i < parts.length; i++)
             {
-                if(!element.trim().isEmpty())
-                    sentenceCount++;
+                String current = parts[i].trim();
+                boolean isAbbreviation = false;
+
+                // CHECK IF PART ENDS WITH ABBREVIATION
+                for(String abbr : abbreviationSet)
+                {
+                    if(current.endsWith(abbr))
+                    {
+                        isAbbreviation = true;
+                        break;
+                    }
+                }
+
+                // IF NOT ABBREVIATION, COUNT AS SENTENCE
+                if(!isAbbreviation)
+                {
+                    if(!current.isEmpty())
+                        sentenceCount++;
+                }
+                else
+                {
+                    // HANDLE CASE WHERE ABBREVIATION IS ACTUALLY END OF SENTENCE
+                    if(i == parts.length - 1)
+                    {
+                        if(!current.isEmpty())
+                            sentenceCount++;
+                    }
+                    else
+                    {
+                        String next = parts[i + 1].trim();
+                        if(!next.isEmpty() && Character.isUpperCase(next.charAt(0)))
+                            sentenceCount++;
+                    }
+                }
             }
 
-            return sentenceCount; // RETURN SENTENCE COUNT
+            return sentenceCount;
         }
     }
 
