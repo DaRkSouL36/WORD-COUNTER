@@ -146,6 +146,13 @@ public class Main extends JFrame implements ActionListener
         redoItem.addActionListener(this); // ADD ACTION LISTENER FOR REDO
         findReplaceItem.addActionListener(this); // ADD ACTION LISTENER FOR FIND & REPLACE
 
+        // FORMAT MENU FOR FONT CUSTOMIZATION
+        JMenu formatMenu = new JMenu("FORMAT");
+        JMenuItem fontItem = new JMenuItem("FONT...");
+        formatMenu.add(fontItem);
+        menuBar.add(formatMenu);
+        fontItem.addActionListener(this); // ADD ACTION LISTENER FOR FONT OPTION
+
         // SET MENU BAR
         setJMenuBar(menuBar);
     }
@@ -265,6 +272,7 @@ public class Main extends JFrame implements ActionListener
                 if(undoManager.canRedo()) // IF REDO IS POSSIBLE
                     undoManager.redo(); // PERFORM REDO ACTION
             }
+            case "FONT..." -> showFontChooser(); // OPEN FONT SELECTION DIALOG
             case "FIND & REPLACE" -> showFindAndReplaceDialog(); // SHOW FIND & REPLACE DIALOG
             case "CLEAR TEXT" -> textArea.setText(""); // CLEAR TEXTAREA CONTENT
             case "EXIT" -> System.exit(0); // EXIT THE APPLICATION
@@ -290,6 +298,42 @@ public class Main extends JFrame implements ActionListener
             String findText = findField.getText(); // GET TEXT TO FIND
             String replaceText = replaceField.getText(); // GET TEXT TO REPLACE
             textArea.setText(textArea.getText().replace(findText, replaceText)); // REPLACE TEXT IN TEXTAREA
+        }
+    }
+
+    // SHOW FONT SELECTION DIALOG
+    private void showFontChooser()
+    {
+        // GET AVAILABLE SYSTEM FONTS
+        String[] fontNames = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
+
+        // CREATE FONT AND SIZE SELECTION COMPONENTS
+        JComboBox<String> fontComboBox = new JComboBox<>(fontNames);
+        JComboBox<Integer> sizeComboBox = new JComboBox<>(new Integer[]{12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 36, 40});
+
+        // CREATE PANEL FOR DIALOG
+        JPanel panel = new JPanel();
+        panel.add(new JLabel("FONT : "));
+        panel.add(fontComboBox);
+        panel.add(new JLabel("SIZE : "));
+        panel.add(sizeComboBox);
+
+        // SHOW DIALOG
+        int result = JOptionPane.showConfirmDialog(this, panel, "SELECT FONT", JOptionPane.OK_CANCEL_OPTION);
+
+        if(result == JOptionPane.OK_OPTION)
+        {
+            String selectedFont = (String) fontComboBox.getSelectedItem();
+            int selectedSize = (Integer) sizeComboBox.getSelectedItem();
+
+            Font newFont = new Font(selectedFont, Font.PLAIN, selectedSize);
+
+            // APPLY FONT TO TEXT AREA AND COUNT LABELS
+            textArea.setFont(newFont);
+            charCountLabel.setFont(newFont);
+            wordCountLabel.setFont(newFont);
+            sentenceCountLabel.setFont(newFont);
+            statusBar.setFont(newFont); // ALSO UPDATE STATUS BAR
         }
     }
 
