@@ -13,7 +13,7 @@ public class Main extends JFrame implements ActionListener
 {
     // DECLARING GUI COMPONENTS (TEXTAREA, LABELS, BUTTONS, PANELS, ETC.)
     JTextArea textArea; // TEXTAREA FOR ENTERING AND DISPLAYING TEXT
-    JLabel charCountLabel, wordCountLabel, sentenceCountLabel; // LABELS TO DISPLAY CHARACTER, WORD, AND SENTENCE COUNTS
+    JLabel charCountLabel, wordCountLabel, sentenceCountLabel, statusBar; // LABELS TO DISPLAY CHARACTER, WORD, AND SENTENCE COUNTS; CURRENT LINE AND COLUMN POSITION
     JButton clearButton, exitButton, darkModeButton; // BUTTONS FOR CLEARING TEXT, EXITING, AND TOGGLING DARK MODE
     JPanel buttonPanel, countPanel; // PANELS FOR LAYOUT OF BUTTONS AND COUNTS
     UndoManager undoManager; // UNDO MANAGER TO HANDLE UNDO/REDO ACTIONS
@@ -44,6 +44,9 @@ public class Main extends JFrame implements ActionListener
         // CREATE A SCROLLPANE TO HOLD THE TEXT AREA (SCROLLING TEXT)
         JScrollPane scrollPane = new JScrollPane(textArea);
         scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // ADD PADDING TO SCROLLPANE BORDER
+
+        // ADD CARET LISTENER TO TRACK LINE AND COLUMN POSITION
+        textArea.addCaretListener(e -> updateStatusBar());
 
         // INITIALIZE LABELS FOR CHARACTER COUNT, WORD COUNT, AND SENTENCE COUNT
         charCountLabel = new JLabel("CHARACTER COUNT : 0");
@@ -101,10 +104,21 @@ public class Main extends JFrame implements ActionListener
         countPanel.add(wordCountLabel, BorderLayout.CENTER); // ADD WORD COUNT LABEL
         countPanel.add(sentenceCountLabel, BorderLayout.EAST); // ADD SENTENCE COUNT LABEL
 
+        // INITIALIZE STATUS BAR TO DISPLAY CARET POSITION
+        statusBar = new JLabel("LINE : 1 | COLUMN : 1");
+        statusBar.setFont(new Font("Times New Roman", Font.BOLD, 14));
+        statusBar.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        statusBar.setHorizontalAlignment(SwingConstants.CENTER);
+
+        // CREATE BOTTOM PANEL TO HOLD COUNT PANEL AND STATUS BAR
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.add(countPanel, BorderLayout.NORTH);
+        bottomPanel.add(statusBar, BorderLayout.SOUTH);
+
         // ADD COMPONENTS TO MAIN FRAME
-        add(scrollPane, BorderLayout.CENTER); // ADD SCROLLPANE TO CENTER
-        add(countPanel, BorderLayout.SOUTH); // ADD COUNT PANEL TO SOUTH
-        add(buttonPanel, BorderLayout.NORTH); // ADD BUTTON PANEL TO NORTH
+        add(scrollPane, BorderLayout.CENTER);
+        add(bottomPanel, BorderLayout.SOUTH);
+        add(buttonPanel, BorderLayout.NORTH);
 
         // CREATE MENU BAR
         JMenuBar menuBar = new JMenuBar();
@@ -304,6 +318,26 @@ public class Main extends JFrame implements ActionListener
             countPanel.setBackground(Color.WHITE); // SET COUNT PANEL BACKGROUND TO WHITE
             buttonPanel.setBackground(Color.WHITE); // SET BUTTON PANEL BACKGROUND TO WHITE
         }
+    }
+
+    // UPDATE STATUS BAR WITH CURRENT LINE AND COLUMN NUMBER
+    private void updateStatusBar()
+    {
+        int caretPosition = textArea.getCaretPosition();
+        int lineNumber = 0;
+        int columnNumber = 0;
+
+        try
+        {
+            lineNumber = textArea.getLineOfOffset(caretPosition);
+            columnNumber = caretPosition - textArea.getLineStartOffset(lineNumber);
+        }
+        catch(Exception ex)
+        {
+            ex.printStackTrace();
+        }
+
+        statusBar.setText("LINE : " + (lineNumber + 1) + " | COLUMN : " + (columnNumber + 1));
     }
 
     // MAIN METHOD TO RUN THE APPLICATION
