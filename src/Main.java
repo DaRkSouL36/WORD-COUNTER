@@ -26,6 +26,7 @@ public class Main extends JFrame
     LineNumberView lineNumbers; // TO COUNT LINE NUMBERS
     Highlighter.HighlightPainter highlightPainter; // HIGHLIGHT PAINTER FOR SEARCH
     EditorDialogs dialogs = new EditorDialogs(this); // INITIALIZE THE DIALOGS HELPER
+    EditorActions actions = new EditorActions(this, dialogs); // INITIALIZE THE ACTIONS CONTROLLER
 
     // CONSTRUCTOR TO SET UP THE FRAME AND INITIALIZE COMPONENTS
     public Main()
@@ -84,191 +85,22 @@ public class Main extends JFrame
         statusBar.setHorizontalAlignment(SwingConstants.CENTER);
 
         // =========================================================================================
-        // DEFINE ALL ABSTRACT ACTIONS
+        // INITIALIZE BUTTONS USING ACTIONS FROM CONTROLLER
         // =========================================================================================
 
-        Action openAction = new AbstractAction("OPEN")
-        {
-            public void actionPerformed(ActionEvent e)
-            {
-                JFileChooser fileChooser = new JFileChooser();
-                fileChooser.setFileFilter(new FileNameExtensionFilter("TEXT FILE", "txt"));
-                int option = fileChooser.showOpenDialog(Main.this);
-                if(option == JFileChooser.APPROVE_OPTION)
-                {
-                    try(BufferedReader reader = new BufferedReader(new FileReader(fileChooser.getSelectedFile())))
-                    {
-                        textArea.read(reader, null); // THIS TRIGGERS THE DOCUMENT LISTENER
-                        lineNumbers.updateLineNumbers();
-                        undoManager.discardAllEdits();
-
-                        // --- LOGIC FOR UNSAVED CHANGES INDICATOR ---
-                        currentFileName = fileChooser.getSelectedFile().getName(); // GET FILE NAME
-                        hasUnsavedChanges = false; // RESET FLAG (MUST BE AFTER textArea.read!)
-                        updateWindowTitle(); // UPDATE TITLE BAR
-                    }
-                    catch(IOException ex)
-                    {
-                        ex.printStackTrace();
-                    }
-                }
-            }
-        };
-
-        Action saveAction = new AbstractAction("SAVE")
-        {
-            public void actionPerformed(ActionEvent e)
-            {
-                JFileChooser fileChooser = new JFileChooser();
-                fileChooser.setFileFilter(new FileNameExtensionFilter("TEXT FILE", "txt"));
-                int option = fileChooser.showSaveDialog(Main.this);
-                if(option == JFileChooser.APPROVE_OPTION)
-                {
-                    try
-                    {
-                        File file = fileChooser.getSelectedFile();
-                        if(!file.getName().toLowerCase().endsWith(".txt"))
-                        {
-                            file = new File(file.getAbsolutePath() + ".txt");
-                        }
-                        BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-                        textArea.write(writer);
-                        writer.close();
-
-                        // --- LOGIC FOR UNSAVED CHANGES INDICATOR ---
-                        currentFileName = file.getName(); // UPDATE TO SAVED FILE NAME
-                        hasUnsavedChanges = false; // RESET FLAG
-                        updateWindowTitle(); // UPDATE TITLE BAR
-                    }
-                    catch(IOException ex)
-                    {
-                        ex.printStackTrace();
-                    }
-                }
-            }
-        };
-
-        Action exportPdfAction = new AbstractAction("EXPORT AS PDF")
-        {
-            public void actionPerformed(ActionEvent e) { dialogs.exportToPDF(); }
-        };
-        exportPdfAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-
-        Action undoAction = new AbstractAction("UNDO")
-        {
-            public void actionPerformed(ActionEvent e)
-            {
-                try { if(undoManager.canUndo()) undoManager.undo(); }
-                catch(Exception ex) { ex.printStackTrace(); }
-            }
-        };
-        undoAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Z, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-
-        Action redoAction = new AbstractAction("REDO")
-        {
-            public void actionPerformed(ActionEvent e)
-            {
-                try { if(undoManager.canRedo()) undoManager.redo(); }
-                catch(Exception ex) { ex.printStackTrace(); }
-            }
-        };
-        redoAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Y, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-
-        Action findAction = new AbstractAction("FIND")
-        {
-            public void actionPerformed(ActionEvent e) { dialogs.showFindDialog(); }
-        };
-        findAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_F, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-
-        Action findReplaceAction = new AbstractAction("FIND & REPLACE")
-        {
-            public void actionPerformed(ActionEvent e) { dialogs.showFindAndReplaceDialog(); }
-        };
-        findReplaceAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-
-        Action goToLineAction = new AbstractAction("GO TO LINE")
-        {
-            public void actionPerformed(ActionEvent e) { dialogs.showGoToLineDialog(); }
-        };
-        goToLineAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_G, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-
-        Action fontAction = new AbstractAction("FONT...")
-        {
-            public void actionPerformed(ActionEvent e) { dialogs.showFontChooser(); }
-        };
-
-        Action colorAction = new AbstractAction("COLOR...")
-        {
-            public void actionPerformed(ActionEvent e) { dialogs.showColorChooser(); }
-        };
-
-        Action zoomInAction = new AbstractAction("ZOOM IN")
-        {
-            public void actionPerformed(ActionEvent e) { zoomIn(); }
-        };
-        zoomInAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-
-        Action zoomOutAction = new AbstractAction("ZOOM OUT")
-        {
-            public void actionPerformed(ActionEvent e) { zoomOut(); }
-        };
-        zoomOutAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-
-        Action clearAction = new AbstractAction("CLEAR TEXT")
-        {
-            public void actionPerformed(ActionEvent e) { textArea.setText(""); }
-        };
-        clearAction.putValue(Action.SHORT_DESCRIPTION, "CLEAR ALL TEXT IN THE TEXT AREA");
-
-        Action exitAction = new AbstractAction("EXIT")
-        {
-            public void actionPerformed(ActionEvent e) { System.exit(0); }
-        };
-        exitAction.putValue(Action.SHORT_DESCRIPTION, "EXIT THE APPLICATION");
-
-        Action darkModeAction = new AbstractAction("DARK MODE")
-        {
-            public void actionPerformed(ActionEvent e) { toggleDarkMode(); }
-        };
-        darkModeAction.putValue(Action.SHORT_DESCRIPTION, "TOGGLE DARK MODE");
-
-        Action textStatsAction = new AbstractAction("TEXT STATISTICS")
-        {
-            public void actionPerformed(ActionEvent e) { dialogs.showTextStatistics(); }
-        };
-        // ASSIGN CTRL + I (FOR INFORMATION/INSPECTION) AS SHORTCUT
-        textStatsAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_I, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-
-        Action wordWrapAction = new AbstractAction("WORD WRAP")
-        {
-            public void actionPerformed(ActionEvent e)
-            {
-                // GET CURRENT WRAP STATE AND TOGGLE IT
-                boolean isWrapped = textArea.getLineWrap();
-                textArea.setLineWrap(!isWrapped);
-                textArea.setWrapStyleWord(!isWrapped); // KEEP WORDS INTACT WHEN WRAPPING
-            }
-        };
-        // ASSIGN ALT + W AS A QUICK SHORTCUT FOR WORD WRAP
-        wordWrapAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_W, KeyEvent.ALT_DOWN_MASK));
-
-        // =========================================================================================
-        // INITIALIZE BUTTONS USING ACTIONS
-        // =========================================================================================
-
-        clearButton = new JButton(clearAction);
+        clearButton = new JButton(actions.clearAction);
         clearButton.setFont(new Font("Times New Roman", Font.BOLD, 14));
         clearButton.setForeground(Color.WHITE);
         clearButton.setBackground(Color.BLUE);
         clearButton.setFocusPainted(false);
 
-        exitButton = new JButton(exitAction);
+        exitButton = new JButton(actions.exitAction);
         exitButton.setFont(new Font("Times New Roman", Font.BOLD, 14));
         exitButton.setForeground(Color.WHITE);
         exitButton.setBackground(Color.RED);
         exitButton.setFocusPainted(false);
 
-        darkModeButton = new JButton(darkModeAction);
+        darkModeButton = new JButton(actions.darkModeAction);
         darkModeButton.setFont(new Font("Times New Roman", Font.BOLD, 14));
         darkModeButton.setForeground(Color.WHITE);
         darkModeButton.setBackground(Color.DARK_GRAY);
@@ -283,54 +115,50 @@ public class Main extends JFrame
         buttonPanel.add(darkModeButton);
 
         // =========================================================================================
-        // INITIALIZE MENU BAR USING ACTIONS
+        // INITIALIZE MENU BAR USING ACTIONS FROM CONTROLLER
         // =========================================================================================
 
         JMenuBar menuBar = new JMenuBar();
 
         // FILE MENU
         JMenu fileMenu = new JMenu("FILE");
-        fileMenu.add(new JMenuItem(openAction));
-        fileMenu.add(new JMenuItem(saveAction));
-        fileMenu.add(new JMenuItem(exportPdfAction));
+        fileMenu.add(new JMenuItem(actions.openAction));
+        fileMenu.add(new JMenuItem(actions.saveAction));
+        fileMenu.add(new JMenuItem(actions.exportPdfAction));
         menuBar.add(fileMenu);
 
         // EDIT MENU
         JMenu editMenu = new JMenu("EDIT");
-        editMenu.add(new JMenuItem(undoAction));
-        editMenu.add(new JMenuItem(redoAction));
+        editMenu.add(new JMenuItem(actions.undoAction));
+        editMenu.add(new JMenuItem(actions.redoAction));
         editMenu.addSeparator();
-        editMenu.add(new JMenuItem(findAction));
-        editMenu.add(new JMenuItem(findReplaceAction));
+        editMenu.add(new JMenuItem(actions.findAction));
+        editMenu.add(new JMenuItem(actions.findReplaceAction));
         editMenu.addSeparator();
-        editMenu.add(new JMenuItem(goToLineAction));
+        editMenu.add(new JMenuItem(actions.goToLineAction));
         menuBar.add(editMenu);
 
         // FORMAT MENU
         JMenu formatMenu = new JMenu("FORMAT");
-        formatMenu.add(new JMenuItem(fontAction));
-        formatMenu.add(new JMenuItem(colorAction));
+        formatMenu.add(new JMenuItem(actions.fontAction));
+        formatMenu.add(new JMenuItem(actions.colorAction));
         menuBar.add(formatMenu);
 
         // VIEW MENU
         JMenu viewMenu = new JMenu("VIEW");
-
-        // CREATE CHECKBOX MENU ITEM FOR WORD WRAP AND SET DEFAULT STATE TO FALSE
-        JCheckBoxMenuItem wordWrapItem = new JCheckBoxMenuItem(wordWrapAction);
-        wordWrapItem.setState(false); // MATCHES THE INITIAL textArea.setLineWrap(false)
-
+        JCheckBoxMenuItem wordWrapItem = new JCheckBoxMenuItem(actions.wordWrapAction);
+        wordWrapItem.setState(false);
         viewMenu.add(wordWrapItem);
-        viewMenu.addSeparator(); // ADD VISUAL SEPARATOR BETWEEN WRAP AND ZOOM
-        viewMenu.add(new JMenuItem(zoomInAction));
-        viewMenu.add(new JMenuItem(zoomOutAction));
+        viewMenu.addSeparator();
+        viewMenu.add(new JMenuItem(actions.zoomInAction));
+        viewMenu.add(new JMenuItem(actions.zoomOutAction));
         menuBar.add(viewMenu);
 
-        // TOOLS MENU (NEW MENU)
+        // TOOLS MENU
         JMenu toolsMenu = new JMenu("TOOLS");
-        toolsMenu.add(new JMenuItem(textStatsAction));
+        toolsMenu.add(new JMenuItem(actions.textStatsAction));
         menuBar.add(toolsMenu);
 
-        // SET MENU BAR
         setJMenuBar(menuBar);
 
         // =========================================================================================
@@ -353,45 +181,16 @@ public class Main extends JFrame
         add(buttonPanel, BorderLayout.NORTH);
 
         // =========================================================================================
-        // REGISTER GLOBAL KEYBOARD SHORTCUTS FOR BUTTONS AND SECONDARY KEYS
+        // REGISTER GLOBAL KEYBOARD SHORTCUTS
         // =========================================================================================
 
         JRootPane rootPane = getRootPane();
 
-        // CLEAR TEXT : CTRL + L
-        rootPane.registerKeyboardAction(
-                clearAction,
-                KeyStroke.getKeyStroke(KeyEvent.VK_L, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
-                JComponent.WHEN_IN_FOCUSED_WINDOW
-        );
-
-        // DARK MODE : CTRL + D
-        rootPane.registerKeyboardAction(
-                darkModeAction,
-                KeyStroke.getKeyStroke(KeyEvent.VK_D, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
-                JComponent.WHEN_IN_FOCUSED_WINDOW
-        );
-
-        // EXIT : CTRL + Q
-        rootPane.registerKeyboardAction(
-                exitAction,
-                KeyStroke.getKeyStroke(KeyEvent.VK_Q, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
-                JComponent.WHEN_IN_FOCUSED_WINDOW
-        );
-
-        // ZOOM IN (NUMPAD ADD SUPPORT)
-        rootPane.registerKeyboardAction(
-                zoomInAction,
-                KeyStroke.getKeyStroke(KeyEvent.VK_ADD, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
-                JComponent.WHEN_IN_FOCUSED_WINDOW
-        );
-
-        // ZOOM OUT (NUMPAD SUBTRACT SUPPORT)
-        rootPane.registerKeyboardAction(
-                zoomOutAction,
-                KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
-                JComponent.WHEN_IN_FOCUSED_WINDOW
-        );
+        rootPane.registerKeyboardAction(actions.clearAction, KeyStroke.getKeyStroke(KeyEvent.VK_L, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), JComponent.WHEN_IN_FOCUSED_WINDOW);
+        rootPane.registerKeyboardAction(actions.darkModeAction, KeyStroke.getKeyStroke(KeyEvent.VK_D, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), JComponent.WHEN_IN_FOCUSED_WINDOW);
+        rootPane.registerKeyboardAction(actions.exitAction, KeyStroke.getKeyStroke(KeyEvent.VK_Q, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), JComponent.WHEN_IN_FOCUSED_WINDOW);
+        rootPane.registerKeyboardAction(actions.zoomInAction, KeyStroke.getKeyStroke(KeyEvent.VK_ADD, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), JComponent.WHEN_IN_FOCUSED_WINDOW);
+        rootPane.registerKeyboardAction(actions.zoomOutAction, KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
         setVisible(true); // MAKE FRAME VISIBLE
     }
@@ -401,7 +200,7 @@ public class Main extends JFrame
     // =========================================================================================
 
     // INCREASE FONT SIZE BY 2 POINTS (ZOOM IN)
-    private void zoomIn()
+    public void zoomIn()
     {
         Font currentFont = textArea.getFont();
         int newSize = currentFont.getSize() + 2;
@@ -413,7 +212,7 @@ public class Main extends JFrame
     }
 
     // DECREASE FONT SIZE BY 2 POINTS (ZOOM OUT)
-    private void zoomOut()
+    public void zoomOut()
     {
         Font currentFont = textArea.getFont();
         int newSize = currentFont.getSize() - 2;
@@ -436,7 +235,7 @@ public class Main extends JFrame
     }
 
     // TOGGLE BETWEEN DARK AND LIGHT MODE
-    private void toggleDarkMode()
+    public void toggleDarkMode()
     {
         isDarkMode = !isDarkMode; // TOGGLE DARK MODE FLAG
 
