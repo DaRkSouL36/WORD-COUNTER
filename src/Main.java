@@ -13,7 +13,7 @@ import java.awt.event.ActionListener; // IMPORT FOR ACTION LISTENER INTERFACE
 import java.io.*; // IMPORT FOR FILE HANDLING
 import java.awt.event.KeyEvent; // IMPORT FOR KEYBOARD SHORTCUT KEYS
 
-public class Main extends JFrame implements ActionListener 
+public class Main extends JFrame implements ActionListener
 {
     // DECLARING GUI COMPONENTS (TEXTAREA, LABELS, BUTTONS, PANELS, ETC.)
     JTextArea textArea; // TEXTAREA FOR ENTERING AND DISPLAYING TEXT
@@ -210,6 +210,30 @@ public class Main extends JFrame implements ActionListener
         rootPane.registerKeyboardAction(
                 e -> System.exit(0),
                 KeyStroke.getKeyStroke(KeyEvent.VK_Q, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
+                JComponent.WHEN_IN_FOCUSED_WINDOW
+        );
+
+        // ZOOM IN : CTRL + = (MAIN KEYBOARD) AND CTRL + ADD (NUMPAD)
+        rootPane.registerKeyboardAction(
+                e -> zoomIn(),
+                KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
+                JComponent.WHEN_IN_FOCUSED_WINDOW
+        );
+        rootPane.registerKeyboardAction(
+                e -> zoomIn(),
+                KeyStroke.getKeyStroke(KeyEvent.VK_ADD, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
+                JComponent.WHEN_IN_FOCUSED_WINDOW
+        );
+
+        // ZOOM OUT : CTRL + - (MAIN KEYBOARD) AND CTRL + SUBTRACT (NUMPAD)
+        rootPane.registerKeyboardAction(
+                e -> zoomOut(),
+                KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
+                JComponent.WHEN_IN_FOCUSED_WINDOW
+        );
+        rootPane.registerKeyboardAction(
+                e -> zoomOut(),
+                KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
                 JComponent.WHEN_IN_FOCUSED_WINDOW
         );
 
@@ -560,7 +584,7 @@ public class Main extends JFrame implements ActionListener
             charCountLabel.setFont(newFont);
             wordCountLabel.setFont(newFont);
             sentenceCountLabel.setFont(newFont);
-            statusBar.setFont(newFont); // ALSO UPDATE STATUS BAR
+            statusBar.setFont(newFont);
         }
     }
 
@@ -575,6 +599,41 @@ public class Main extends JFrame implements ActionListener
         {
             textArea.setForeground(newColor);
         }
+    }
+
+    // INCREASE FONT SIZE BY 2 POINTS (ZOOM IN)
+    private void zoomIn()
+    {
+        Font currentFont = textArea.getFont();
+        int newSize = currentFont.getSize() + 2;
+
+        if(newSize <= 72) // MAXIMUM FONT SIZE LIMIT TO PREVENT RENDERING ISSUES
+        {
+            applyDynamicFont(new Font(currentFont.getFamily(), currentFont.getStyle(), newSize));
+        }
+    }
+
+    // DECREASE FONT SIZE BY 2 POINTS (ZOOM OUT)
+    private void zoomOut()
+    {
+        Font currentFont = textArea.getFont();
+        int newSize = currentFont.getSize() - 2;
+
+        if(newSize >= 8) // MINIMUM FONT SIZE LIMIT TO KEEP TEXT READABLE
+        {
+            applyDynamicFont(new Font(currentFont.getFamily(), currentFont.getStyle(), newSize));
+        }
+    }
+
+    // APPLY NEW FONT SIZE TO ALL RELEVANT UI COMPONENTS
+    private void applyDynamicFont(Font newFont)
+    {
+        textArea.setFont(newFont);
+        lineNumbers.setFont(newFont);
+        charCountLabel.setFont(newFont);
+        wordCountLabel.setFont(newFont);
+        sentenceCountLabel.setFont(newFont);
+        statusBar.setFont(newFont);
     }
 
     // TOGGLE BETWEEN DARK AND LIGHT MODE
