@@ -9,11 +9,10 @@ import javax.swing.undo.UndoManager; // IMPORT FOR UNDO/REDO FUNCTIONALITY
 import java.awt.*; // IMPORT FOR AWT (ABSTRACT WINDOW TOOLKIT) COMPONENTS
 import java.awt.print.*;   // IMPORT FOR PRINTING
 import java.awt.event.ActionEvent; // IMPORT FOR ACTION EVENT HANDLING
-import java.awt.event.ActionListener; // IMPORT FOR ACTION LISTENER INTERFACE
 import java.io.*; // IMPORT FOR FILE HANDLING
 import java.awt.event.KeyEvent; // IMPORT FOR KEYBOARD SHORTCUT KEYS
 
-public class Main extends JFrame implements ActionListener
+public class Main extends JFrame
 {
     // DECLARING GUI COMPONENTS (TEXTAREA, LABELS, BUTTONS, PANELS, ETC.)
     JTextArea textArea; // TEXTAREA FOR ENTERING AND DISPLAYING TEXT
@@ -23,7 +22,7 @@ public class Main extends JFrame implements ActionListener
     UndoManager undoManager; // UNDO MANAGER TO HANDLE UNDO/REDO ACTIONS
     boolean isDarkMode = false; // FLAG TO TOGGLE DARK MODE
     LineNumberView lineNumbers; // TO COUNT LINE NUMBERS
-    Highlighter.HighlightPainter highlightPainter; //
+    Highlighter.HighlightPainter highlightPainter; // HIGHLIGHT PAINTER FOR SEARCH
 
     // CONSTRUCTOR TO SET UP THE FRAME AND INITIALIZE COMPONENTS
     public Main()
@@ -75,203 +74,288 @@ public class Main extends JFrame implements ActionListener
         sentenceCountLabel.setFont(new Font("Times New Roman", Font.BOLD, 18)); // SET FONT SIZE AND STYLE
         sentenceCountLabel.setForeground(Color.DARK_GRAY); // SET TEXT COLOR TO DARK GRAY
 
-        // INITIALIZE BUTTONS FOR CLEARING TEXT, EXITING, AND TOGGLING DARK MODE
-        clearButton = new JButton("CLEAR TEXT");
-        clearButton.addActionListener(this); // ADD ACTION LISTENER FOR CLEAR BUTTON
-        clearButton.setFont(new Font("Times New Roman", Font.BOLD, 14)); // SET FONT STYLE AND SIZE
-        clearButton.setForeground(Color.WHITE); // SET BUTTON TEXT COLOR
-        clearButton.setBackground(Color.BLUE); // SET BUTTON BACKGROUND COLOR
-        clearButton.setFocusPainted(false); // REMOVE FOCUS PAINT
-        clearButton.setToolTipText("CLEAR ALL TEXT IN THE TEXT AREA"); // SET TOOLTIP TEXT
-
-        exitButton = new JButton("EXIT");
-        exitButton.addActionListener(this); // ADD ACTION LISTENER FOR EXIT BUTTON
-        exitButton.setFont(new Font("Times New Roman", Font.BOLD, 14)); // SET FONT STYLE AND SIZE
-        exitButton.setForeground(Color.WHITE); // SET BUTTON TEXT COLOR
-        exitButton.setBackground(Color.RED); // SET BUTTON BACKGROUND COLOR
-        exitButton.setFocusPainted(false); // REMOVE FOCUS PAINT
-        exitButton.setToolTipText("EXIT THE APPLICATION"); // SET TOOLTIP TEXT
-
-        darkModeButton = new JButton("DARK MODE");
-        darkModeButton.addActionListener(this); // ADD ACTION LISTENER FOR DARK MODE BUTTON
-        darkModeButton.setFont(new Font("Times New Roman", Font.BOLD, 14)); // SET FONT STYLE AND SIZE
-        darkModeButton.setForeground(Color.WHITE); // SET BUTTON TEXT COLOR
-        darkModeButton.setBackground(Color.DARK_GRAY); // SET BUTTON BACKGROUND COLOR
-        darkModeButton.setFocusPainted(false); // REMOVE FOCUS PAINT
-        darkModeButton.setToolTipText("TOGGLE DARK MODE"); // SET TOOLTIP TEXT
-
-        // CREATE BUTTON PANEL AND ADD BUTTONS
-        buttonPanel = new JPanel();
-        buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER)); // CENTER BUTTONS IN PANEL
-        buttonPanel.setBackground(Color.WHITE); // SET BUTTON PANEL BACKGROUND TO WHITE
-        buttonPanel.add(clearButton); // ADD CLEAR BUTTON
-        buttonPanel.add(exitButton); // ADD EXIT BUTTON
-        buttonPanel.add(darkModeButton); // ADD DARK MODE BUTTON
-
-        // CREATE PANEL TO DISPLAY COUNTS AND ADD LABELS
-        countPanel = new JPanel(new BorderLayout());
-        countPanel.setBorder(new EmptyBorder(10, 20, 10, 20)); // ADD PADDING TO PANEL
-        countPanel.add(charCountLabel, BorderLayout.WEST); // ADD CHARACTER COUNT LABEL
-        countPanel.add(wordCountLabel, BorderLayout.CENTER); // ADD WORD COUNT LABEL
-        countPanel.add(sentenceCountLabel, BorderLayout.EAST); // ADD SENTENCE COUNT LABEL
-
         // INITIALIZE STATUS BAR TO DISPLAY CARET POSITION
         statusBar = new JLabel("LINE : 1 | COLUMN : 1");
         statusBar.setFont(new Font("Times New Roman", Font.BOLD, 14));
         statusBar.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         statusBar.setHorizontalAlignment(SwingConstants.CENTER);
 
-        // CREATE BOTTOM PANEL TO HOLD COUNT PANEL AND STATUS BAR
+        // =========================================================================================
+        // DEFINE ALL ABSTRACT ACTIONS
+        // =========================================================================================
+
+        Action openAction = new AbstractAction("OPEN")
+        {
+            public void actionPerformed(ActionEvent e)
+            {
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setFileFilter(new FileNameExtensionFilter("TEXT FILE", "txt"));
+                int option = fileChooser.showOpenDialog(Main.this);
+                if(option == JFileChooser.APPROVE_OPTION)
+                {
+                    try(BufferedReader reader = new BufferedReader(new FileReader(fileChooser.getSelectedFile())))
+                    {
+                        textArea.read(reader, null);
+                        lineNumbers.updateLineNumbers();
+                        undoManager.discardAllEdits();
+                    }
+                    catch(IOException ex)
+                    {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+        };
+        openAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+
+        Action saveAction = new AbstractAction("SAVE")
+        {
+            public void actionPerformed(ActionEvent e)
+            {
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setFileFilter(new FileNameExtensionFilter("TEXT FILE", "txt"));
+                int option = fileChooser.showSaveDialog(Main.this);
+                if(option == JFileChooser.APPROVE_OPTION)
+                {
+                    try
+                    {
+                        File file = fileChooser.getSelectedFile();
+                        if(!file.getName().toLowerCase().endsWith(".txt"))
+                        {
+                            file = new File(file.getAbsolutePath() + ".txt");
+                        }
+                        BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+                        textArea.write(writer);
+                        writer.close();
+                    }
+                    catch(IOException ex)
+                    {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+        };
+        saveAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+
+        Action exportPdfAction = new AbstractAction("EXPORT AS PDF")
+        {
+            public void actionPerformed(ActionEvent e) { exportToPDF(); }
+        };
+        exportPdfAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+
+        Action undoAction = new AbstractAction("UNDO")
+        {
+            public void actionPerformed(ActionEvent e)
+            {
+                try { if(undoManager.canUndo()) undoManager.undo(); }
+                catch(Exception ex) { ex.printStackTrace(); }
+            }
+        };
+        undoAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Z, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+
+        Action redoAction = new AbstractAction("REDO")
+        {
+            public void actionPerformed(ActionEvent e)
+            {
+                try { if(undoManager.canRedo()) undoManager.redo(); }
+                catch(Exception ex) { ex.printStackTrace(); }
+            }
+        };
+        redoAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Y, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+
+        Action findAction = new AbstractAction("FIND")
+        {
+            public void actionPerformed(ActionEvent e) { showFindDialog(); }
+        };
+        findAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_F, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+
+        Action findReplaceAction = new AbstractAction("FIND & REPLACE")
+        {
+            public void actionPerformed(ActionEvent e) { showFindAndReplaceDialog(); }
+        };
+        findReplaceAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+
+        Action goToLineAction = new AbstractAction("GO TO LINE")
+        {
+            public void actionPerformed(ActionEvent e) { showGoToLineDialog(); }
+        };
+        goToLineAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_G, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+
+        Action fontAction = new AbstractAction("FONT...")
+        {
+            public void actionPerformed(ActionEvent e) { showFontChooser(); }
+        };
+
+        Action colorAction = new AbstractAction("COLOR...")
+        {
+            public void actionPerformed(ActionEvent e) { showColorChooser(); }
+        };
+
+        Action zoomInAction = new AbstractAction("ZOOM IN")
+        {
+            public void actionPerformed(ActionEvent e) { zoomIn(); }
+        };
+        zoomInAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+
+        Action zoomOutAction = new AbstractAction("ZOOM OUT")
+        {
+            public void actionPerformed(ActionEvent e) { zoomOut(); }
+        };
+        zoomOutAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+
+        Action clearAction = new AbstractAction("CLEAR TEXT")
+        {
+            public void actionPerformed(ActionEvent e) { textArea.setText(""); }
+        };
+        clearAction.putValue(Action.SHORT_DESCRIPTION, "CLEAR ALL TEXT IN THE TEXT AREA");
+
+        Action exitAction = new AbstractAction("EXIT")
+        {
+            public void actionPerformed(ActionEvent e) { System.exit(0); }
+        };
+        exitAction.putValue(Action.SHORT_DESCRIPTION, "EXIT THE APPLICATION");
+
+        Action darkModeAction = new AbstractAction("DARK MODE")
+        {
+            public void actionPerformed(ActionEvent e) { toggleDarkMode(); }
+        };
+        darkModeAction.putValue(Action.SHORT_DESCRIPTION, "TOGGLE DARK MODE");
+
+        // =========================================================================================
+        // INITIALIZE BUTTONS USING ACTIONS
+        // =========================================================================================
+
+        clearButton = new JButton(clearAction);
+        clearButton.setFont(new Font("Times New Roman", Font.BOLD, 14));
+        clearButton.setForeground(Color.WHITE);
+        clearButton.setBackground(Color.BLUE);
+        clearButton.setFocusPainted(false);
+
+        exitButton = new JButton(exitAction);
+        exitButton.setFont(new Font("Times New Roman", Font.BOLD, 14));
+        exitButton.setForeground(Color.WHITE);
+        exitButton.setBackground(Color.RED);
+        exitButton.setFocusPainted(false);
+
+        darkModeButton = new JButton(darkModeAction);
+        darkModeButton.setFont(new Font("Times New Roman", Font.BOLD, 14));
+        darkModeButton.setForeground(Color.WHITE);
+        darkModeButton.setBackground(Color.DARK_GRAY);
+        darkModeButton.setFocusPainted(false);
+
+        // CREATE BUTTON PANEL AND ADD BUTTONS
+        buttonPanel = new JPanel();
+        buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel.setBackground(Color.WHITE);
+        buttonPanel.add(clearButton);
+        buttonPanel.add(exitButton);
+        buttonPanel.add(darkModeButton);
+
+        // =========================================================================================
+        // INITIALIZE MENU BAR USING ACTIONS
+        // =========================================================================================
+
+        JMenuBar menuBar = new JMenuBar();
+
+        // FILE MENU
+        JMenu fileMenu = new JMenu("FILE");
+        fileMenu.add(new JMenuItem(openAction));
+        fileMenu.add(new JMenuItem(saveAction));
+        fileMenu.add(new JMenuItem(exportPdfAction));
+        menuBar.add(fileMenu);
+
+        // EDIT MENU
+        JMenu editMenu = new JMenu("EDIT");
+        editMenu.add(new JMenuItem(undoAction));
+        editMenu.add(new JMenuItem(redoAction));
+        editMenu.addSeparator();
+        editMenu.add(new JMenuItem(findAction));
+        editMenu.add(new JMenuItem(findReplaceAction));
+        editMenu.addSeparator();
+        editMenu.add(new JMenuItem(goToLineAction));
+        menuBar.add(editMenu);
+
+        // FORMAT MENU
+        JMenu formatMenu = new JMenu("FORMAT");
+        formatMenu.add(new JMenuItem(fontAction));
+        formatMenu.add(new JMenuItem(colorAction));
+        menuBar.add(formatMenu);
+
+        // VIEW MENU
+        JMenu viewMenu = new JMenu("VIEW");
+        viewMenu.add(new JMenuItem(zoomInAction));
+        viewMenu.add(new JMenuItem(zoomOutAction));
+        menuBar.add(viewMenu);
+
+        // SET MENU BAR
+        setJMenuBar(menuBar);
+
+        // =========================================================================================
+        // ASSEMBLE PANELS AND FRAME COMPONENTS
+        // =========================================================================================
+
+        countPanel = new JPanel(new BorderLayout());
+        countPanel.setBorder(new EmptyBorder(10, 20, 10, 20));
+        countPanel.add(charCountLabel, BorderLayout.WEST);
+        countPanel.add(wordCountLabel, BorderLayout.CENTER);
+        countPanel.add(sentenceCountLabel, BorderLayout.EAST);
+
         bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setBackground(Color.WHITE);
         bottomPanel.add(countPanel, BorderLayout.NORTH);
         bottomPanel.add(statusBar, BorderLayout.SOUTH);
 
-        // ADD COMPONENTS TO MAIN FRAME
         add(scrollPane, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
         add(buttonPanel, BorderLayout.NORTH);
 
-        // CREATE MENU BAR
-        JMenuBar menuBar = new JMenuBar();
+        // =========================================================================================
+        // REGISTER GLOBAL KEYBOARD SHORTCUTS FOR BUTTONS AND SECONDARY KEYS
+        // =========================================================================================
 
-        // FILE MENU WITH OPEN AND SAVE OPTIONS
-        JMenu fileMenu = new JMenu("FILE");
-        JMenuItem openItem = new JMenuItem("OPEN");
-        JMenuItem saveItem = new JMenuItem("SAVE");
-        JMenuItem exportPdfItem = new JMenuItem("EXPORT AS PDF");
-
-        fileMenu.add(openItem); // ADD OPEN ITEM TO FILE MENU
-        fileMenu.add(saveItem); // ADD SAVE ITEM TO FILE MENU
-        fileMenu.add(exportPdfItem); // ADD EXPORT AS PDF TO FILE MENU
-        menuBar.add(fileMenu); // ADD FILE MENU TO MENU BAR
-        openItem.addActionListener(this); // ADD ACTION LISTENER FOR OPEN
-        saveItem.addActionListener(this); // ADD ACTION LISTENER FOR SAVE
-        exportPdfItem.addActionListener(this); // ADD ACTION LISTENER FOR EXPORT AS PDF
-
-        // ADD KEYBOARD SHORTCUTS FOR FILE MENU
-        openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-        saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-        exportPdfItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-
-        // EDIT MENU WITH UNDO, REDO, FIND & REPLACE, AND GO TO OPTIONS
-        JMenu editMenu = new JMenu("EDIT");
-        JMenuItem undoItem = new JMenuItem("UNDO");
-        JMenuItem redoItem = new JMenuItem("REDO");
-        JMenuItem findItem = new JMenuItem("FIND");
-        JMenuItem findReplaceItem = new JMenuItem("FIND & REPLACE");
-        JMenuItem goToItem = new JMenuItem("GO TO LINE");
-
-        editMenu.add(undoItem); // ADD UNDO ITEM TO EDIT MENU
-        editMenu.add(redoItem); // ADD REDO ITEM TO EDIT MENU
-        editMenu.addSeparator(); // ADD VISUAL SEPARATOR
-        editMenu.add(findItem); // ADD FIND ITEM TO EDIT MENU
-        editMenu.add(findReplaceItem); // ADD FIND & REPLACE ITEM TO EDIT MENU
-        editMenu.addSeparator(); // ADD VISUAL SEPARATOR
-        editMenu.add(goToItem); // ADD GO TO ITEM TO EDIT MENU
-        menuBar.add(editMenu); // ADD EDIT MENU TO MENU BAR
-
-        undoItem.addActionListener(this); // ADD ACTION LISTENER FOR UNDO
-        redoItem.addActionListener(this); // ADD ACTION LISTENER FOR REDO
-        findItem.addActionListener(this); // ADD ACTION LISTENER FOR FIND
-        findReplaceItem.addActionListener(this); // ADD ACTION LISTENER FOR FIND & REPLACE
-        goToItem.addActionListener(this); // ADD ACTION LISTENER FOR GO TO
-
-        // ADD KEYBOARD SHORTCUTS FOR EDIT MENU
-        undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-        redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-        findItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-        findReplaceItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-        goToItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-
-        // FORMAT MENU FOR FONT AND COLOR CUSTOMIZATION
-        JMenu formatMenu = new JMenu("FORMAT");
-        JMenuItem fontItem = new JMenuItem("FONT...");
-        JMenuItem colorItem = new JMenuItem("COLOR...");
-
-        formatMenu.add(fontItem);
-        formatMenu.add(colorItem);
-        menuBar.add(formatMenu);
-
-        fontItem.addActionListener(this);   // ADD ACTION LISTENER FOR FONT
-        colorItem.addActionListener(this);  // ADD ACTION LISTENER FOR COLOR
-
-        // VIEW MENU FOR ZOOM CUSTOMIZATION (NEW MENU)
-        JMenu viewMenu = new JMenu("VIEW");
-        JMenuItem zoomInItem = new JMenuItem("ZOOM IN");
-        JMenuItem zoomOutItem = new JMenuItem("ZOOM OUT");
-
-        viewMenu.add(zoomInItem);
-        viewMenu.add(zoomOutItem);
-        menuBar.add(viewMenu);
-
-        zoomInItem.addActionListener(this);  // ADD ACTION LISTENER FOR ZOOM IN
-        zoomOutItem.addActionListener(this); // ADD ACTION LISTENER FOR ZOOM OUT
-
-        // ADD KEYBOARD SHORTCUTS FOR VIEW MENU
-        zoomInItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-        zoomOutItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-
-        // ADD KEYBOARD SHORTCUTS FOR BUTTON ACTIONS
         JRootPane rootPane = getRootPane();
 
         // CLEAR TEXT : CTRL + L
         rootPane.registerKeyboardAction(
-                e -> textArea.setText(""),
+                clearAction,
                 KeyStroke.getKeyStroke(KeyEvent.VK_L, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
                 JComponent.WHEN_IN_FOCUSED_WINDOW
         );
 
         // DARK MODE : CTRL + D
         rootPane.registerKeyboardAction(
-                e -> toggleDarkMode(),
+                darkModeAction,
                 KeyStroke.getKeyStroke(KeyEvent.VK_D, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
                 JComponent.WHEN_IN_FOCUSED_WINDOW
         );
 
         // EXIT : CTRL + Q
         rootPane.registerKeyboardAction(
-                e -> System.exit(0),
+                exitAction,
                 KeyStroke.getKeyStroke(KeyEvent.VK_Q, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
                 JComponent.WHEN_IN_FOCUSED_WINDOW
         );
 
-        // ZOOM IN : CTRL + = (MAIN KEYBOARD) AND CTRL + ADD (NUMPAD)
+        // ZOOM IN (NUMPAD ADD SUPPORT)
         rootPane.registerKeyboardAction(
-                e -> zoomIn(),
-                KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
-                JComponent.WHEN_IN_FOCUSED_WINDOW
-        );
-        rootPane.registerKeyboardAction(
-                e -> zoomIn(),
+                zoomInAction,
                 KeyStroke.getKeyStroke(KeyEvent.VK_ADD, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
                 JComponent.WHEN_IN_FOCUSED_WINDOW
         );
 
-        // ZOOM OUT : CTRL + - (MAIN KEYBOARD) AND CTRL + SUBTRACT (NUMPAD)
+        // ZOOM OUT (NUMPAD SUBTRACT SUPPORT)
         rootPane.registerKeyboardAction(
-                e -> zoomOut(),
-                KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
-                JComponent.WHEN_IN_FOCUSED_WINDOW
-        );
-        rootPane.registerKeyboardAction(
-                e -> zoomOut(),
+                zoomOutAction,
                 KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
                 JComponent.WHEN_IN_FOCUSED_WINDOW
         );
 
-        // GO TO LINE : CTRL + G
-        rootPane.registerKeyboardAction(
-                e -> showGoToLineDialog(),
-                KeyStroke.getKeyStroke(KeyEvent.VK_G, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
-                JComponent.WHEN_IN_FOCUSED_WINDOW
-        );
-
-        // SET MENU BAR
-        setJMenuBar(menuBar);
-
         setVisible(true); // MAKE FRAME VISIBLE
     }
+
+    // =========================================================================================
+    // UTILITY CLASSES AND METHODS
+    // =========================================================================================
 
     // DOCUMENT LISTENER TO TRACK TEXT CHANGES
     private class Count implements DocumentListener
@@ -367,99 +451,6 @@ public class Main extends JFrame implements ActionListener
             }
 
             return sentenceCount;
-        }
-    }
-
-    // ACTION HANDLER FOR BUTTON AND MENU ACTIONS
-    public void actionPerformed(ActionEvent e)
-    {
-        String command = e.getActionCommand(); // GET ACTION COMMAND (BUTTON/MENU ITEM)
-
-        switch(command)
-        {
-            case "OPEN" -> // OPEN FILE
-            {
-                JFileChooser fileChooser = new JFileChooser();
-                fileChooser.setFileFilter(new FileNameExtensionFilter("TEXT FILE", "txt")); // FILTER TEXT FILES
-                int option = fileChooser.showOpenDialog(this); // OPEN FILE DIALOG
-                if(option == JFileChooser.APPROVE_OPTION) // IF FILE SELECTED
-                {
-                    try(BufferedReader reader = new BufferedReader(new FileReader(fileChooser.getSelectedFile())))
-                    {
-                        textArea.read(reader, null); // READ FILE CONTENT INTO TEXTAREA
-                        lineNumbers.updateLineNumbers();
-                        undoManager.discardAllEdits();
-                    }
-                    catch(IOException ex) // HANDLE EXCEPTION
-                    {
-                        ex.printStackTrace();
-                    }
-                }
-            }
-            case "SAVE" -> // SAVE FILE
-            {
-                JFileChooser fileChooser = new JFileChooser();
-                fileChooser.setFileFilter(new FileNameExtensionFilter("TEXT FILE", "txt")); // FILTER TEXT FILES
-
-                int option = fileChooser.showSaveDialog(this); // SHOW SAVE DIALOG
-
-                if(option == JFileChooser.APPROVE_OPTION) // IF FILE SELECTED
-                {
-                    try
-                    {
-                        File file = fileChooser.getSelectedFile(); // GET SELECTED FILE
-
-                        // IF USER DID NOT TYPE ".txt", ADD IT AUTOMATICALLY
-                        if(!file.getName().toLowerCase().endsWith(".txt"))
-                        {
-                            file = new File(file.getAbsolutePath() + ".txt");
-                        }
-
-                        BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-                        textArea.write(writer); // WRITE CONTENT TO FILE
-                        writer.close(); // CLOSE WRITER
-                    }
-                    catch(IOException ex)
-                    {
-                        ex.printStackTrace();
-                    }
-                }
-            }
-            case "UNDO" -> // UNDO LAST ACTION
-            {
-                try
-                {
-                    if(undoManager.canUndo())
-                        undoManager.undo();
-                }
-                catch(Exception ex)
-                {
-                    ex.printStackTrace();
-                }
-            }
-            case "REDO" -> // REDO LAST ACTION
-            {
-                try
-                {
-                    if(undoManager.canRedo())
-                        undoManager.redo();
-                }
-                catch(Exception ex)
-                {
-                    ex.printStackTrace();
-                }
-            }
-            case "EXPORT AS PDF" -> exportToPDF();
-            case "FONT..." -> showFontChooser(); // OPEN FONT SELECTION DIALOG
-            case "COLOR..." -> showColorChooser(); // OPEN COLOR SELECTION DIALOG
-            case "FIND" -> showFindDialog(); // OPEN FIND DIALOG
-            case "FIND & REPLACE" -> showFindAndReplaceDialog(); // OPEN FIND & REPLACE
-            case "GO TO LINE" -> showGoToLineDialog(); // TRIGGER GO TO LINE
-            case "ZOOM IN" -> zoomIn(); // TRIGGER ZOOM IN
-            case "ZOOM OUT" -> zoomOut(); // TRIGGER ZOOM OUT
-            case "CLEAR TEXT" -> textArea.setText(""); // CLEAR TEXTAREA CONTENT
-            case "EXIT" -> System.exit(0); // EXIT THE APPLICATION
-            case "DARK MODE" -> toggleDarkMode(); // TOGGLE DARK MODE
         }
     }
 
@@ -631,12 +622,7 @@ public class Main extends JFrame implements ActionListener
             Font newFont = new Font(selectedFont, Font.PLAIN, selectedSize);
 
             // APPLY FONT TO TEXT AREA AND COUNT LABELS
-            textArea.setFont(newFont);
-            lineNumbers.setFont(newFont);
-            charCountLabel.setFont(newFont);
-            wordCountLabel.setFont(newFont);
-            sentenceCountLabel.setFont(newFont);
-            statusBar.setFont(newFont);
+            applyDynamicFont(newFont);
         }
     }
 
