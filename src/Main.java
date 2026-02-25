@@ -1,5 +1,6 @@
 import java.util.*; // IMPORT FOR COLLECTIONS USED IN SENTENCE COUNTING
 import javax.swing.*; // IMPORT SWING LIBRARY FOR GUI COMPONENTS
+import javax.swing.text.*; // IMPORT FOR TEXT HIGHLIGHTING
 import javax.swing.border.EmptyBorder; // IMPORT FOR BORDER STYLES
 import javax.swing.event.DocumentEvent; // IMPORT FOR DOCUMENT EVENT HANDLING
 import javax.swing.event.DocumentListener; // IMPORT FOR DOCUMENT LISTENER INTERFACE
@@ -22,6 +23,7 @@ public class Main extends JFrame implements ActionListener
     UndoManager undoManager; // UNDO MANAGER TO HANDLE UNDO/REDO ACTIONS
     boolean isDarkMode = false; // FLAG TO TOGGLE DARK MODE
     LineNumberView lineNumbers; // TO COUNT LINE NUMBERS
+    Highlighter.HighlightPainter highlightPainter; //
 
     // CONSTRUCTOR TO SET UP THE FRAME AND INITIALIZE COMPONENTS
     public Main()
@@ -32,6 +34,7 @@ public class Main extends JFrame implements ActionListener
         setLocationRelativeTo(null); // CENTER THE FRAME ON SCREEN
         setLayout(new BorderLayout()); // SET THE FRAME'S LAYOUT TO BORDER LAYOUT
         getContentPane().setBackground(Color.WHITE); // SET BACKGROUND COLOR OF THE FRAME TO WHITE
+        highlightPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW); // HIGHLIGHT COLOR
 
         // INITIALIZE TEXT AREA
         textArea = new JTextArea();
@@ -138,10 +141,6 @@ public class Main extends JFrame implements ActionListener
         JMenuItem saveItem = new JMenuItem("SAVE");
         JMenuItem exportPdfItem = new JMenuItem("EXPORT AS PDF");
 
-        // ADD KEYBOARD SHORTCUTS FOR FILE MENU
-        openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-        saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-
         fileMenu.add(openItem); // ADD OPEN ITEM TO FILE MENU
         fileMenu.add(saveItem); // ADD SAVE ITEM TO FILE MENU
         fileMenu.add(exportPdfItem); // ADD EXPORT AS PDF TO FILE MENU
@@ -150,24 +149,33 @@ public class Main extends JFrame implements ActionListener
         saveItem.addActionListener(this); // ADD ACTION LISTENER FOR SAVE
         exportPdfItem.addActionListener(this); // ADD ACTION LISTENER FOR EXPORT AS PDF
 
+        // ADD KEYBOARD SHORTCUTS FOR FILE MENU
+        openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+        saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+        exportPdfItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+
         // EDIT MENU WITH UNDO, REDO, AND FIND & REPLACE OPTIONS
         JMenu editMenu = new JMenu("EDIT");
         JMenuItem undoItem = new JMenuItem("UNDO");
         JMenuItem redoItem = new JMenuItem("REDO");
+        JMenuItem findItem = new JMenuItem("FIND");
         JMenuItem findReplaceItem = new JMenuItem("FIND & REPLACE");
-
-        // ADD KEYBOARD SHORTCUTS FOR EDIT MENU
-        undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-        redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-        findReplaceItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
 
         editMenu.add(undoItem); // ADD UNDO ITEM TO EDIT MENU
         editMenu.add(redoItem); // ADD REDO ITEM TO EDIT MENU
+        editMenu.add(findItem); // ADD FIND ITEM TO EDIT MENU
         editMenu.add(findReplaceItem); // ADD FIND & REPLACE ITEM TO EDIT MENU
         menuBar.add(editMenu); // ADD EDIT MENU TO MENU BAR
         undoItem.addActionListener(this); // ADD ACTION LISTENER FOR UNDO
         redoItem.addActionListener(this); // ADD ACTION LISTENER FOR REDO
+        findItem.addActionListener(this); // ADD ACTION LISTENER FOR FIND
         findReplaceItem.addActionListener(this); // ADD ACTION LISTENER FOR FIND & REPLACE
+
+        // ADD KEYBOARD SHORTCUTS FOR EDIT MENU
+        undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+        redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+        findItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+        findReplaceItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
 
         // FORMAT MENU FOR FONT AND COLOR CUSTOMIZATION
         JMenu formatMenu = new JMenu("FORMAT");
@@ -325,6 +333,7 @@ public class Main extends JFrame implements ActionListener
                     try(BufferedReader reader = new BufferedReader(new FileReader(fileChooser.getSelectedFile())))
                     {
                         textArea.read(reader, null); // READ FILE CONTENT INTO TEXTAREA
+                        lineNumbers.updateLineNumbers();
                     }
                     catch(IOException ex) // HANDLE EXCEPTION
                     {
@@ -388,7 +397,8 @@ public class Main extends JFrame implements ActionListener
             case "EXPORT AS PDF" -> exportToPDF();
             case "FONT..." -> showFontChooser(); // OPEN FONT SELECTION DIALOG
             case "COLOR..." -> showColorChooser(); // OPEN COLOR SELECTION DIALOG
-            case "FIND & REPLACE" -> showFindAndReplaceDialog(); // SHOW FIND & REPLACE DIALOG
+            case "FIND" -> showFindDialog(); // OPEN FIND DIALOG
+            case "FIND & REPLACE" -> showFindAndReplaceDialog(); // OPEN FIND & REPLACE
             case "CLEAR TEXT" -> textArea.setText(""); // CLEAR TEXTAREA CONTENT
             case "EXIT" -> System.exit(0); // EXIT THE APPLICATION
             case "DARK MODE" -> toggleDarkMode(); // TOGGLE DARK MODE
@@ -434,6 +444,28 @@ public class Main extends JFrame implements ActionListener
         }
     }
 
+    // SHOW FIND DIALOG FOR WORD SEARCH AND HIGHLIGHT
+    private void showFindDialog()
+    {
+        JTextField findField = new JTextField(15);
+
+        int result = JOptionPane.showConfirmDialog(
+                this,
+                findField,
+                "FIND",
+                JOptionPane.OK_CANCEL_OPTION
+        );
+
+        if(result == JOptionPane.OK_OPTION)
+        {
+            String findText = findField.getText();
+            highlightText(findText); // HIGHLIGHT ONLY
+        }
+
+        // RETURN FOCUS TO EDITOR BEFORE CLOSING
+        textArea.requestFocusInWindow();
+    }
+
     // SHOW FIND AND REPLACE DIALOG
     private void showFindAndReplaceDialog()
     {
@@ -452,10 +484,44 @@ public class Main extends JFrame implements ActionListener
             String findText = findField.getText();
             String replaceText = replaceField.getText();
 
-            // REPLACE IF TEXT PROVIDED
-            if(findText != null && !findText.isEmpty())
+            // HIGHLIGHT FOUND TEXT
+            highlightText(findText);
+
+            // REPLACE IF PROVIDED
+            if(findText != null && !findText.isEmpty() && !replaceText.isEmpty())
             {
                 textArea.setText(textArea.getText().replace(findText, replaceText));
+            }
+        }
+
+        // RETURN FOCUS TO EDITOR BEFORE CLOSING
+        textArea.requestFocusInWindow();
+    }
+
+    // HIGHLIGHT ALL OCCURRENCES OF SEARCH TEXT
+    private void highlightText(String pattern)
+    {
+        Highlighter highlighter = textArea.getHighlighter();
+        highlighter.removeAllHighlights();
+
+        if(pattern == null || pattern.isEmpty())
+            return;
+
+        String text = textArea.getText().toLowerCase();
+        pattern = pattern.toLowerCase();
+
+        int index = 0;
+
+        while((index = text.indexOf(pattern, index)) != -1)
+        {
+            try
+            {
+                highlighter.addHighlight(index, index + pattern.length(), highlightPainter);
+                index += pattern.length();
+            }
+            catch(BadLocationException ex)
+            {
+                ex.printStackTrace();
             }
         }
     }
