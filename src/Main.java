@@ -46,7 +46,7 @@ public class Main extends JFrame
         // INITIALIZE UNDO MANAGER TO HANDLE UNDO AND REDO ACTIONS
         undoManager = new UndoManager();
         textArea.getDocument().addUndoableEditListener(undoManager); // ATTACH UNDO MANAGER TO DOCUMENT CHANGES
-        textArea.getDocument().addDocumentListener(new Count()); // ADD DOCUMENT LISTENER TO UPDATE COUNTS
+        textArea.getDocument().addDocumentListener(new DocumentAnalyzer(this)); // ADD DOCUMENT LISTENER TO UPDATE COUNTS
 
         // CREATE LINE NUMBER COMPONENT FIRST
         lineNumbers = new LineNumberView(textArea);
@@ -399,110 +399,6 @@ public class Main extends JFrame
     // UTILITY CLASSES AND METHODS
     // =========================================================================================
 
-    // DOCUMENT LISTENER TO TRACK TEXT CHANGES
-    private class Count implements DocumentListener
-    {
-        // ACTION WHEN TEXT IS INSERTED
-        public void insertUpdate(DocumentEvent e)
-        {
-            updateCount(); // UPDATE COUNTS ON INSERT
-        }
-
-        // ACTION WHEN TEXT IS REMOVED
-        public void removeUpdate(DocumentEvent e)
-        {
-            updateCount(); // UPDATE COUNTS ON REMOVE
-        }
-
-        // ACTION WHEN DOCUMENT IS CHANGED
-        public void changedUpdate(DocumentEvent e)
-        {
-            updateCount(); // UPDATE COUNTS ON CHANGE
-        }
-
-        // UPDATE COUNTS FOR CHARACTERS, WORDS, AND SENTENCES
-        private void updateCount()
-        {
-            String text = textArea.getText().trim(); // GET TEXT FROM TEXTAREA
-
-            if(text.isEmpty()) // IF TEXT AREA IS EMPTY
-            {
-                charCountLabel.setText("CHARACTER COUNT : 0"); // SET CHAR COUNT TO 0
-                wordCountLabel.setText("WORD COUNT : 0"); // SET WORD COUNT TO 0
-                sentenceCountLabel.setText("SENTENCE COUNT : 0"); // SET SENTENCE COUNT TO 0
-            }
-            else
-            {
-                String[] words = text.split("\\s+"); // SPLIT TEXT INTO WORDS
-                int wordCount = words.length; // COUNT WORDS
-                int charCount = text.length(); // COUNT CHARACTERS
-                int sentenceCount = countSentences(text); // COUNT SENTENCES
-                charCountLabel.setText("CHARACTER COUNT : " + charCount); // UPDATE CHAR COUNT LABEL
-                wordCountLabel.setText("WORD COUNT : " + wordCount); // UPDATE WORD COUNT LABEL
-                sentenceCountLabel.setText("SENTENCE COUNT : " + sentenceCount); // UPDATE SENTENCE COUNT LABEL
-            }
-
-            lineNumbers.updateLineNumbers();
-
-            // ONLY UPDATE THE TITLE BAR IF THE FLAG ISN'T ALREADY SET TO TRUE
-            if(!hasUnsavedChanges)
-            {
-                hasUnsavedChanges = true;
-                updateWindowTitle();
-            }
-        }
-
-        // COUNT SENTENCES WITH MULTIPLE PUNCTUATION AND ABBREVIATION HANDLING
-        private int countSentences(String text)
-        {
-            if(text.isEmpty()) // IF TEXT IS EMPTY
-                return 0;
-
-            // LIST OF COMMON ABBREVIATIONS
-            String[] abbreviations = {"Mr.", "Mrs.", "Ms.", "Dr.", "Prof.", "Sr.", "Jr."};
-            Set<String> abbreviationSet = new HashSet<>(Arrays.asList(abbreviations));
-
-            int sentenceCount = 0;
-
-            // REGEX TO MATCH SENTENCE-LIKE STRUCTURES
-            java.util.regex.Pattern pattern =
-                    java.util.regex.Pattern.compile("[^.!?]+[.!?]+");
-
-            java.util.regex.Matcher matcher = pattern.matcher(text);
-
-            while(matcher.find())
-            {
-                String sentence = matcher.group().trim();
-
-                boolean isAbbreviation = false;
-
-                // CHECK IF MATCH IS JUST AN ABBREVIATION
-                for(String abbr : abbreviationSet)
-                {
-                    if(sentence.equals(abbr))
-                    {
-                        isAbbreviation = true;
-                        break;
-                    }
-                }
-
-                // COUNT ONLY IF NOT PURE ABBREVIATION
-                if(!isAbbreviation)
-                {
-                    sentenceCount++;
-                }
-            }
-
-            // IF TEXT EXISTS BUT NO PUNCTUATION FOUND, COUNT AS ONE SENTENCE
-            if(sentenceCount == 0 && !text.trim().isEmpty())
-            {
-                sentenceCount = 1;
-            }
-
-            return sentenceCount;
-        }
-    }
-
     // EXPORT TEXT CONTENT AS PDF
     private void exportToPDF()
     {
@@ -846,7 +742,7 @@ public class Main extends JFrame
     }
 
     // DYNAMICALLY UPDATE THE WINDOW TITLE BASED ON SAVE STATE AND FILE NAME
-    private void updateWindowTitle()
+    public void updateWindowTitle()
     {
         // IF THERE ARE UNSAVED CHANGES, PREPEND AN ASTERISK
         String prefix = hasUnsavedChanges ? "* " : "";
