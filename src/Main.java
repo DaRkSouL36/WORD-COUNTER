@@ -238,6 +238,19 @@ public class Main extends JFrame
         // ASSIGN CTRL + I (FOR INFORMATION/INSPECTION) AS SHORTCUT
         textStatsAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_I, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
 
+        Action wordWrapAction = new AbstractAction("WORD WRAP")
+        {
+            public void actionPerformed(ActionEvent e)
+            {
+                // GET CURRENT WRAP STATE AND TOGGLE IT
+                boolean isWrapped = textArea.getLineWrap();
+                textArea.setLineWrap(!isWrapped);
+                textArea.setWrapStyleWord(!isWrapped); // KEEP WORDS INTACT WHEN WRAPPING
+            }
+        };
+        // ASSIGN ALT + W AS A QUICK SHORTCUT FOR WORD WRAP
+        wordWrapAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_W, KeyEvent.ALT_DOWN_MASK));
+
         // =========================================================================================
         // INITIALIZE BUTTONS USING ACTIONS
         // =========================================================================================
@@ -300,6 +313,13 @@ public class Main extends JFrame
 
         // VIEW MENU
         JMenu viewMenu = new JMenu("VIEW");
+
+        // CREATE CHECKBOX MENU ITEM FOR WORD WRAP AND SET DEFAULT STATE TO FALSE
+        JCheckBoxMenuItem wordWrapItem = new JCheckBoxMenuItem(wordWrapAction);
+        wordWrapItem.setState(false); // MATCHES THE INITIAL textArea.setLineWrap(false)
+
+        viewMenu.add(wordWrapItem);
+        viewMenu.addSeparator(); // ADD VISUAL SEPARATOR BETWEEN WRAP AND ZOOM
         viewMenu.add(new JMenuItem(zoomInAction));
         viewMenu.add(new JMenuItem(zoomOutAction));
         menuBar.add(viewMenu);
