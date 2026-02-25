@@ -334,6 +334,7 @@ public class Main extends JFrame implements ActionListener
                     {
                         textArea.read(reader, null); // READ FILE CONTENT INTO TEXTAREA
                         lineNumbers.updateLineNumbers();
+                        undoManager.discardAllEdits();
                     }
                     catch(IOException ex) // HANDLE EXCEPTION
                     {
@@ -488,7 +489,7 @@ public class Main extends JFrame implements ActionListener
             highlightText(findText);
 
             // REPLACE IF PROVIDED
-            if(findText != null && !findText.isEmpty() && !replaceText.isEmpty())
+            if(findText != null && !findText.isEmpty())
             {
                 textArea.setText(textArea.getText().replace(findText, replaceText));
             }
