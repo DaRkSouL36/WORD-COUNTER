@@ -9,6 +9,7 @@ import java.awt.*; // IMPORT FOR AWT (ABSTRACT WINDOW TOOLKIT) COMPONENTS
 import java.awt.event.ActionEvent; // IMPORT FOR ACTION EVENT HANDLING
 import java.awt.event.ActionListener; // IMPORT FOR ACTION LISTENER INTERFACE
 import java.io.*; // IMPORT FOR FILE HANDLING
+import java.awt.event.KeyEvent; // IMPORT FOR KEYBOARD SHORTCUT KEYS
 
 public class Main extends JFrame implements ActionListener 
 {
@@ -128,6 +129,11 @@ public class Main extends JFrame implements ActionListener
         JMenu fileMenu = new JMenu("FILE");
         JMenuItem openItem = new JMenuItem("OPEN");
         JMenuItem saveItem = new JMenuItem("SAVE");
+
+        // ADD KEYBOARD SHORTCUTS FOR FILE MENU
+        openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+        saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+
         fileMenu.add(openItem); // ADD OPEN ITEM TO FILE MENU
         fileMenu.add(saveItem); // ADD SAVE ITEM TO FILE MENU
         menuBar.add(fileMenu); // ADD FILE MENU TO MENU BAR
@@ -139,6 +145,12 @@ public class Main extends JFrame implements ActionListener
         JMenuItem undoItem = new JMenuItem("UNDO");
         JMenuItem redoItem = new JMenuItem("REDO");
         JMenuItem findReplaceItem = new JMenuItem("FIND & REPLACE");
+
+        // ADD KEYBOARD SHORTCUTS FOR EDIT MENU
+        undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+        redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+        findReplaceItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+
         editMenu.add(undoItem); // ADD UNDO ITEM TO EDIT MENU
         editMenu.add(redoItem); // ADD REDO ITEM TO EDIT MENU
         editMenu.add(findReplaceItem); // ADD FIND & REPLACE ITEM TO EDIT MENU
@@ -158,6 +170,30 @@ public class Main extends JFrame implements ActionListener
 
         fontItem.addActionListener(this);   // ADD ACTION LISTENER FOR FONT
         colorItem.addActionListener(this);  // ADD ACTION LISTENER FOR COLOR
+
+        // ADD KEYBOARD SHORTCUTS FOR BUTTON ACTIONS
+        JRootPane rootPane = getRootPane();
+
+        // CLEAR TEXT : CTRL + L
+        rootPane.registerKeyboardAction(
+                e -> textArea.setText(""),
+                KeyStroke.getKeyStroke(KeyEvent.VK_L, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
+                JComponent.WHEN_IN_FOCUSED_WINDOW
+        );
+
+        // DARK MODE : CTRL + D
+        rootPane.registerKeyboardAction(
+                e -> toggleDarkMode(),
+                KeyStroke.getKeyStroke(KeyEvent.VK_D, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
+                JComponent.WHEN_IN_FOCUSED_WINDOW
+        );
+
+        // EXIT : CTRL + Q
+        rootPane.registerKeyboardAction(
+                e -> System.exit(0),
+                KeyStroke.getKeyStroke(KeyEvent.VK_Q, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
+                JComponent.WHEN_IN_FOCUSED_WINDOW
+        );
 
         // SET MENU BAR
         setJMenuBar(menuBar);
