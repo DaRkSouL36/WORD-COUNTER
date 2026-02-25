@@ -39,7 +39,7 @@ public class Main extends JFrame implements ActionListener
         // INITIALIZE TEXT AREA
         textArea = new JTextArea();
         textArea.setFont(new Font("Times New Roman", Font.BOLD, 16)); // SET FONT TO TIMES NEW ROMAN, BOLD, SIZE 16
-        textArea.setLineWrap(true); // ENABLE LINE WRAPPING IN THE TEXT AREA
+        textArea.setLineWrap(false); // DISABLE LINE WRAPPING IN THE TEXT AREA
         textArea.setWrapStyleWord(true); // ENABLE WORD-WRAPPING IN THE TEXT AREA
 
         // INITIALIZE UNDO MANAGER TO HANDLE UNDO AND REDO ACTIONS
@@ -542,13 +542,32 @@ public class Main extends JFrame implements ActionListener
             String findText = findField.getText();
             String replaceText = replaceField.getText();
 
-            // HIGHLIGHT FOUND TEXT
-            highlightText(findText);
-
-            // REPLACE IF PROVIDED
+            // REPLACE IF PROVIDED (NON-DESTRUCTIVE METHOD)
             if(findText != null && !findText.isEmpty())
             {
-                textArea.setText(textArea.getText().replace(findText, replaceText));
+                String text = textArea.getText();
+                int index = text.lastIndexOf(findText); // START FROM THE END TO PREVENT INDEX SHIFTING
+
+                textArea.requestFocusInWindow(); // SET FOCUS BEFORE REPLACING
+
+                // LOOP BACKWARDS THROUGH THE TEXT
+                while(index >= 0)
+                {
+                    // REPLACE ONLY THE TARGET RANGE
+                    textArea.replaceRange(replaceText, index, index + findText.length());
+
+                    // FIND THE PREVIOUS OCCURRENCE
+                    index = text.lastIndexOf(findText, index - 1);
+                }
+
+                // HIGHLIGHT THE NEW REPLACED TEXT (OPTIONAL BUT HELPFUL)
+                highlightText(replaceText);
+            }
+            else
+            {
+                // IF ONLY FINDING TEXT, JUST HIGHLIGHT IT
+                highlightText(findText);
+                textArea.requestFocusInWindow();
             }
         }
 
