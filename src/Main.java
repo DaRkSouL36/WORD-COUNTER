@@ -6,6 +6,7 @@ import javax.swing.event.DocumentListener; // IMPORT FOR DOCUMENT LISTENER INTER
 import javax.swing.filechooser.FileNameExtensionFilter; // IMPORT FOR FILE FILTERING IN FILE CHOOSER
 import javax.swing.undo.UndoManager; // IMPORT FOR UNDO/REDO FUNCTIONALITY
 import java.awt.*; // IMPORT FOR AWT (ABSTRACT WINDOW TOOLKIT) COMPONENTS
+import java.awt.print.*;   // IMPORT FOR PRINTING
 import java.awt.event.ActionEvent; // IMPORT FOR ACTION EVENT HANDLING
 import java.awt.event.ActionListener; // IMPORT FOR ACTION LISTENER INTERFACE
 import java.io.*; // IMPORT FOR FILE HANDLING
@@ -129,6 +130,7 @@ public class Main extends JFrame implements ActionListener
         JMenu fileMenu = new JMenu("FILE");
         JMenuItem openItem = new JMenuItem("OPEN");
         JMenuItem saveItem = new JMenuItem("SAVE");
+        JMenuItem exportPdfItem = new JMenuItem("EXPORT AS PDF");
 
         // ADD KEYBOARD SHORTCUTS FOR FILE MENU
         openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
@@ -136,9 +138,11 @@ public class Main extends JFrame implements ActionListener
 
         fileMenu.add(openItem); // ADD OPEN ITEM TO FILE MENU
         fileMenu.add(saveItem); // ADD SAVE ITEM TO FILE MENU
+        fileMenu.add(exportPdfItem); // ADD EXPORT AS PDF TO FILE MENU
         menuBar.add(fileMenu); // ADD FILE MENU TO MENU BAR
         openItem.addActionListener(this); // ADD ACTION LISTENER FOR OPEN
         saveItem.addActionListener(this); // ADD ACTION LISTENER FOR SAVE
+        exportPdfItem.addActionListener(this); // ADD ACTION LISTENER FOR EXPORT AS PDF
 
         // EDIT MENU WITH UNDO, REDO, AND FIND & REPLACE OPTIONS
         JMenu editMenu = new JMenu("EDIT");
@@ -373,12 +377,52 @@ public class Main extends JFrame implements ActionListener
                     ex.printStackTrace();
                 }
             }
+            case "EXPORT AS PDF" -> exportToPDF();
             case "FONT..." -> showFontChooser(); // OPEN FONT SELECTION DIALOG
             case "COLOR..." -> showColorChooser(); // OPEN COLOR SELECTION DIALOG
             case "FIND & REPLACE" -> showFindAndReplaceDialog(); // SHOW FIND & REPLACE DIALOG
             case "CLEAR TEXT" -> textArea.setText(""); // CLEAR TEXTAREA CONTENT
             case "EXIT" -> System.exit(0); // EXIT THE APPLICATION
             case "DARK MODE" -> toggleDarkMode(); // TOGGLE DARK MODE
+        }
+    }
+
+    // EXPORT TEXT CONTENT AS PDF
+    private void exportToPDF()
+    {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setSelectedFile(new File("document.pdf"));
+
+        int option = fileChooser.showSaveDialog(this);
+
+        if(option == JFileChooser.APPROVE_OPTION)
+        {
+            try
+            {
+                File file = fileChooser.getSelectedFile();
+
+                PrinterJob job = PrinterJob.getPrinterJob();
+                job.setJobName("EXPORT PDF");
+
+                job.setPrintable((graphics, pageFormat, pageIndex) ->
+                {
+                    if(pageIndex > 0)
+                        return Printable.NO_SUCH_PAGE;
+
+                    Graphics2D g2d = (Graphics2D) graphics;
+                    g2d.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
+
+                    textArea.printAll(graphics);
+                    return Printable.PAGE_EXISTS;
+                });
+
+                if(job.printDialog())
+                    job.print();
+            }
+            catch(Exception ex)
+            {
+                ex.printStackTrace();
+            }
         }
     }
 
@@ -397,12 +441,13 @@ public class Main extends JFrame implements ActionListener
         int result = JOptionPane.showConfirmDialog(this, panel, "FIND & REPLACE", JOptionPane.OK_CANCEL_OPTION); // SHOW DIALOG
         if(result == JOptionPane.OK_OPTION) // IF OK PRESSED
         {
-            String findText = findField.getText(); // GET TEXT TO FIND
-            String replaceText = replaceField.getText(); // GET TEXT TO REPLACE
+            String findText = findField.getText();
+            String replaceText = replaceField.getText();
 
-            if(!findText.isEmpty())
+            // REPLACE IF TEXT PROVIDED
+            if(findText != null && !findText.isEmpty())
             {
-                textArea.setText(textArea.getText().replace(findText, replaceText)); // REPLACE TEXT IN TEXTAREA
+                textArea.setText(textArea.getText().replace(findText, replaceText));
             }
         }
     }
