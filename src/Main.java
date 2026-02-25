@@ -1,88 +1,90 @@
-import java.util.*; // IMPORT FOR COLLECTIONS USED IN SENTENCE COUNTING
 import javax.swing.*; // IMPORT SWING LIBRARY FOR GUI COMPONENTS
 import javax.swing.text.*; // IMPORT FOR TEXT HIGHLIGHTING
 import javax.swing.border.EmptyBorder; // IMPORT FOR BORDER STYLES
-import javax.swing.event.DocumentEvent; // IMPORT FOR DOCUMENT EVENT HANDLING
-import javax.swing.event.DocumentListener; // IMPORT FOR DOCUMENT LISTENER INTERFACE
-import javax.swing.filechooser.FileNameExtensionFilter; // IMPORT FOR FILE FILTERING IN FILE CHOOSER
 import javax.swing.undo.UndoManager; // IMPORT FOR UNDO/REDO FUNCTIONALITY
 import java.awt.*; // IMPORT FOR AWT (ABSTRACT WINDOW TOOLKIT) COMPONENTS
-import java.awt.print.*;   // IMPORT FOR PRINTING
-import java.awt.event.ActionEvent; // IMPORT FOR ACTION EVENT HANDLING
-import java.io.*; // IMPORT FOR FILE HANDLING
 import java.awt.event.KeyEvent; // IMPORT FOR KEYBOARD SHORTCUT KEYS
 
 public class Main extends JFrame
 {
-    // DECLARING GUI COMPONENTS (TEXTAREA, LABELS, BUTTONS, PANELS, ETC.)
-    JTextArea textArea; // TEXTAREA FOR ENTERING AND DISPLAYING TEXT
-    JLabel charCountLabel, wordCountLabel, sentenceCountLabel, statusBar; // LABELS TO DISPLAY CHARACTER, WORD, AND SENTENCE COUNTS; CURRENT LINE AND COLUMN POSITION
-    JButton clearButton, exitButton, darkModeButton; // BUTTONS FOR CLEARING TEXT, EXITING, AND TOGGLING DARK MODE
-    JPanel buttonPanel, countPanel, bottomPanel; // PANELS FOR BUTTONS, COUNTS, AND BOTTOM SECTION
-    UndoManager undoManager; // UNDO MANAGER TO HANDLE UNDO/REDO ACTIONS
-    boolean isDarkMode = false; // FLAG TO TOGGLE DARK MODE
-    boolean hasUnsavedChanges = false; // FLAG TO TRACK IF DOCUMENT HAS BEEN MODIFIED
-    String currentFileName = "WORD COUNTER"; // TRACKS THE CURRENT FILE NAME (DEFAULTS TO APP NAME)
-    LineNumberView lineNumbers; // TO COUNT LINE NUMBERS
-    Highlighter.HighlightPainter highlightPainter; // HIGHLIGHT PAINTER FOR SEARCH
-    EditorDialogs dialogs = new EditorDialogs(this); // INITIALIZE THE DIALOGS HELPER
-    EditorActions actions = new EditorActions(this, dialogs); // INITIALIZE THE ACTIONS CONTROLLER
+    // =========================================================================================
+    // DECLARING GUI COMPONENTS (NOW PUBLIC FOR EXTERNAL CONTROLLER ACCESS)
+    // =========================================================================================
+
+    public JTextArea textArea;
+    public JLabel charCountLabel, wordCountLabel, sentenceCountLabel, statusBar;
+    public JButton clearButton, exitButton, darkModeButton;
+    public JPanel buttonPanel, countPanel, bottomPanel;
+    public UndoManager undoManager;
+    public boolean isDarkMode = false;
+    public boolean hasUnsavedChanges = false;
+    public String currentFileName = "WORD COUNTER";
+    public LineNumberView lineNumbers;
+    public Highlighter.HighlightPainter highlightPainter;
 
     // CONSTRUCTOR TO SET UP THE FRAME AND INITIALIZE COMPONENTS
     public Main()
     {
         super("WORD COUNTER"); // SET FRAME TITLE
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // CLOSE APPLICATION ON WINDOW CLOSE
-        setSize(1000, 500); // SET WINDOW SIZE (WIDTH: 1000px, HEIGHT: 500px)
+        setSize(1000, 500); // SET WINDOW SIZE
         setLocationRelativeTo(null); // CENTER THE FRAME ON SCREEN
-        setLayout(new BorderLayout()); // SET THE FRAME'S LAYOUT TO BORDER LAYOUT
-        getContentPane().setBackground(Color.WHITE); // SET BACKGROUND COLOR OF THE FRAME TO WHITE
-        highlightPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW); // HIGHLIGHT COLOR
+        setLayout(new BorderLayout()); // SET BORDER LAYOUT
+        getContentPane().setBackground(Color.WHITE);
+        highlightPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
 
         // INITIALIZE TEXT AREA
         textArea = new JTextArea();
-        textArea.setFont(new Font("Times New Roman", Font.BOLD, 16)); // SET FONT TO TIMES NEW ROMAN, BOLD, SIZE 16
-        textArea.setLineWrap(false); // DISABLE LINE WRAPPING IN THE TEXT AREA
-        textArea.setWrapStyleWord(true); // ENABLE WORD-WRAPPING IN THE TEXT AREA
+        textArea.setFont(new Font("Times New Roman", Font.BOLD, 16));
+        textArea.setLineWrap(false);
+        textArea.setWrapStyleWord(true);
 
-        // INITIALIZE UNDO MANAGER TO HANDLE UNDO AND REDO ACTIONS
+        // INITIALIZE UNDO MANAGER
         undoManager = new UndoManager();
-        textArea.getDocument().addUndoableEditListener(undoManager); // ATTACH UNDO MANAGER TO DOCUMENT CHANGES
-        textArea.getDocument().addDocumentListener(new DocumentAnalyzer(this)); // ADD DOCUMENT LISTENER TO UPDATE COUNTS
+        textArea.getDocument().addUndoableEditListener(undoManager);
 
-        // CREATE LINE NUMBER COMPONENT FIRST
+        // ATTACH THE EXTERNAL DOCUMENT ANALYZER (MODEL)
+        textArea.getDocument().addDocumentListener(new DocumentAnalyzer(this));
+
+        // CREATE LINE NUMBER COMPONENT
         lineNumbers = new LineNumberView(textArea);
         lineNumbers.updateLineNumbers();
 
-        // CREATE A SCROLLPANE TO HOLD THE TEXT AREA (SCROLLING TEXT)
+        // CREATE SCROLLPANE
         JScrollPane scrollPane = new JScrollPane(textArea);
         scrollPane.setRowHeaderView(lineNumbers);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // ADD PADDING TO SCROLLPANE BORDER
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         // ADD CARET LISTENER TO TRACK LINE AND COLUMN POSITION
         textArea.addCaretListener(e -> updateStatusBar());
 
-        // INITIALIZE LABELS FOR CHARACTER COUNT, WORD COUNT, AND SENTENCE COUNT
+        // INITIALIZE LABELS
         charCountLabel = new JLabel("CHARACTER COUNT : 0");
-        charCountLabel.setHorizontalAlignment(SwingConstants.CENTER); // CENTER ALIGN TEXT
-        charCountLabel.setFont(new Font("Times New Roman", Font.BOLD, 18)); // SET FONT SIZE AND STYLE
-        charCountLabel.setForeground(Color.DARK_GRAY); // SET TEXT COLOR TO DARK GRAY
+        charCountLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        charCountLabel.setFont(new Font("Times New Roman", Font.BOLD, 18));
+        charCountLabel.setForeground(Color.DARK_GRAY);
 
         wordCountLabel = new JLabel("WORD COUNT : 0");
-        wordCountLabel.setHorizontalAlignment(SwingConstants.CENTER); // CENTER ALIGN TEXT
-        wordCountLabel.setFont(new Font("Times New Roman", Font.BOLD, 18)); // SET FONT SIZE AND STYLE
-        wordCountLabel.setForeground(Color.DARK_GRAY); // SET TEXT COLOR TO DARK GRAY
+        wordCountLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        wordCountLabel.setFont(new Font("Times New Roman", Font.BOLD, 18));
+        wordCountLabel.setForeground(Color.DARK_GRAY);
 
         sentenceCountLabel = new JLabel("SENTENCE COUNT : 0");
-        sentenceCountLabel.setHorizontalAlignment(SwingConstants.CENTER); // CENTER ALIGN TEXT
-        sentenceCountLabel.setFont(new Font("Times New Roman", Font.BOLD, 18)); // SET FONT SIZE AND STYLE
-        sentenceCountLabel.setForeground(Color.DARK_GRAY); // SET TEXT COLOR TO DARK GRAY
+        sentenceCountLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        sentenceCountLabel.setFont(new Font("Times New Roman", Font.BOLD, 18));
+        sentenceCountLabel.setForeground(Color.DARK_GRAY);
 
-        // INITIALIZE STATUS BAR TO DISPLAY CARET POSITION
         statusBar = new JLabel("LINE : 1 | COLUMN : 1");
         statusBar.setFont(new Font("Times New Roman", Font.BOLD, 14));
         statusBar.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         statusBar.setHorizontalAlignment(SwingConstants.CENTER);
+
+        // =========================================================================================
+        // INITIALIZE EXTERNAL CONTROLLERS (MVC ARCHITECTURE)
+        // =========================================================================================
+
+        EditorDialogs dialogs = new EditorDialogs(this); // INITIALIZE THE DIALOGS HELPER
+        EditorActions actions = new EditorActions(this, dialogs); // INITIALIZE THE ACTIONS CONTROLLER
 
         // =========================================================================================
         // INITIALIZE BUTTONS USING ACTIONS FROM CONTROLLER
@@ -106,7 +108,6 @@ public class Main extends JFrame
         darkModeButton.setBackground(Color.DARK_GRAY);
         darkModeButton.setFocusPainted(false);
 
-        // CREATE BUTTON PANEL AND ADD BUTTONS
         buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.setBackground(Color.WHITE);
@@ -120,14 +121,12 @@ public class Main extends JFrame
 
         JMenuBar menuBar = new JMenuBar();
 
-        // FILE MENU
         JMenu fileMenu = new JMenu("FILE");
         fileMenu.add(new JMenuItem(actions.openAction));
         fileMenu.add(new JMenuItem(actions.saveAction));
         fileMenu.add(new JMenuItem(actions.exportPdfAction));
         menuBar.add(fileMenu);
 
-        // EDIT MENU
         JMenu editMenu = new JMenu("EDIT");
         editMenu.add(new JMenuItem(actions.undoAction));
         editMenu.add(new JMenuItem(actions.redoAction));
@@ -138,13 +137,11 @@ public class Main extends JFrame
         editMenu.add(new JMenuItem(actions.goToLineAction));
         menuBar.add(editMenu);
 
-        // FORMAT MENU
         JMenu formatMenu = new JMenu("FORMAT");
         formatMenu.add(new JMenuItem(actions.fontAction));
         formatMenu.add(new JMenuItem(actions.colorAction));
         menuBar.add(formatMenu);
 
-        // VIEW MENU
         JMenu viewMenu = new JMenu("VIEW");
         JCheckBoxMenuItem wordWrapItem = new JCheckBoxMenuItem(actions.wordWrapAction);
         wordWrapItem.setState(false);
@@ -154,7 +151,6 @@ public class Main extends JFrame
         viewMenu.add(new JMenuItem(actions.zoomOutAction));
         menuBar.add(viewMenu);
 
-        // TOOLS MENU
         JMenu toolsMenu = new JMenu("TOOLS");
         toolsMenu.add(new JMenuItem(actions.textStatsAction));
         menuBar.add(toolsMenu);
@@ -185,45 +181,19 @@ public class Main extends JFrame
         // =========================================================================================
 
         JRootPane rootPane = getRootPane();
-
         rootPane.registerKeyboardAction(actions.clearAction, KeyStroke.getKeyStroke(KeyEvent.VK_L, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), JComponent.WHEN_IN_FOCUSED_WINDOW);
         rootPane.registerKeyboardAction(actions.darkModeAction, KeyStroke.getKeyStroke(KeyEvent.VK_D, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), JComponent.WHEN_IN_FOCUSED_WINDOW);
         rootPane.registerKeyboardAction(actions.exitAction, KeyStroke.getKeyStroke(KeyEvent.VK_Q, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), JComponent.WHEN_IN_FOCUSED_WINDOW);
         rootPane.registerKeyboardAction(actions.zoomInAction, KeyStroke.getKeyStroke(KeyEvent.VK_ADD, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), JComponent.WHEN_IN_FOCUSED_WINDOW);
         rootPane.registerKeyboardAction(actions.zoomOutAction, KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-        setVisible(true); // MAKE FRAME VISIBLE
+        setVisible(true);
     }
 
     // =========================================================================================
-    // UTILITY METHODS
+    // PUBLIC UI UPDATE METHODS (CALLED BY EXTERNAL CONTROLLERS)
     // =========================================================================================
 
-    // INCREASE FONT SIZE BY 2 POINTS (ZOOM IN)
-    public void zoomIn()
-    {
-        Font currentFont = textArea.getFont();
-        int newSize = currentFont.getSize() + 2;
-
-        if(newSize <= 72) // MAXIMUM FONT SIZE LIMIT TO PREVENT RENDERING ISSUES
-        {
-            applyDynamicFont(new Font(currentFont.getFamily(), currentFont.getStyle(), newSize));
-        }
-    }
-
-    // DECREASE FONT SIZE BY 2 POINTS (ZOOM OUT)
-    public void zoomOut()
-    {
-        Font currentFont = textArea.getFont();
-        int newSize = currentFont.getSize() - 2;
-
-        if(newSize >= 8) // MINIMUM FONT SIZE LIMIT TO KEEP TEXT READABLE
-        {
-            applyDynamicFont(new Font(currentFont.getFamily(), currentFont.getStyle(), newSize));
-        }
-    }
-
-    // APPLY NEW FONT SIZE TO ALL RELEVANT UI COMPONENTS
     public void applyDynamicFont(Font newFont)
     {
         textArea.setFont(newFont);
@@ -234,51 +204,57 @@ public class Main extends JFrame
         statusBar.setFont(newFont);
     }
 
-    // TOGGLE BETWEEN DARK AND LIGHT MODE
+    public void zoomIn()
+    {
+        Font currentFont = textArea.getFont();
+        int newSize = currentFont.getSize() + 2;
+        if(newSize <= 72) applyDynamicFont(new Font(currentFont.getFamily(), currentFont.getStyle(), newSize));
+    }
+
+    public void zoomOut()
+    {
+        Font currentFont = textArea.getFont();
+        int newSize = currentFont.getSize() - 2;
+        if(newSize >= 8) applyDynamicFont(new Font(currentFont.getFamily(), currentFont.getStyle(), newSize));
+    }
+
     public void toggleDarkMode()
     {
-        isDarkMode = !isDarkMode; // TOGGLE DARK MODE FLAG
+        isDarkMode = !isDarkMode;
 
-        if(isDarkMode) // IF DARK MODE ENABLED
+        if(isDarkMode)
         {
             textArea.setBackground(Color.BLACK);
             textArea.setForeground(Color.WHITE);
-
             charCountLabel.setForeground(Color.WHITE);
             wordCountLabel.setForeground(Color.WHITE);
             sentenceCountLabel.setForeground(Color.WHITE);
             statusBar.setForeground(Color.WHITE);
-
             bottomPanel.setBackground(Color.DARK_GRAY);
             countPanel.setBackground(Color.DARK_GRAY);
             buttonPanel.setBackground(Color.DARK_GRAY);
-
             getContentPane().setBackground(Color.DARK_GRAY);
             lineNumbers.setBackground(Color.DARK_GRAY);
             lineNumbers.setForeground(Color.WHITE);
         }
-        else // IF LIGHT MODE ENABLED
+        else
         {
             textArea.setBackground(Color.WHITE);
             textArea.setForeground(Color.BLACK);
-
             charCountLabel.setForeground(Color.DARK_GRAY);
             wordCountLabel.setForeground(Color.DARK_GRAY);
             sentenceCountLabel.setForeground(Color.DARK_GRAY);
             statusBar.setForeground(Color.BLACK);
-
             bottomPanel.setBackground(Color.WHITE);
             countPanel.setBackground(Color.WHITE);
             buttonPanel.setBackground(Color.WHITE);
-
             getContentPane().setBackground(Color.WHITE);
             lineNumbers.setBackground(Color.LIGHT_GRAY);
             lineNumbers.setForeground(Color.BLACK);
         }
     }
 
-    // UPDATE STATUS BAR WITH CURRENT LINE AND COLUMN NUMBER
-    private void updateStatusBar()
+    public void updateStatusBar()
     {
         int caretPosition = textArea.getCaretPosition();
         int lineNumber = 0;
@@ -297,10 +273,8 @@ public class Main extends JFrame
         statusBar.setText("LINE : " + (lineNumber + 1) + " | COLUMN : " + (columnNumber + 1));
     }
 
-    // DYNAMICALLY UPDATE THE WINDOW TITLE BASED ON SAVE STATE AND FILE NAME
     public void updateWindowTitle()
     {
-        // IF THERE ARE UNSAVED CHANGES, PREPEND AN ASTERISK
         String prefix = hasUnsavedChanges ? "* " : "";
         setTitle(prefix + currentFileName);
     }
@@ -308,6 +282,6 @@ public class Main extends JFrame
     // MAIN METHOD TO RUN THE APPLICATION
     public static void main(String[] args)
     {
-        SwingUtilities.invokeLater(Main::new); // RUN THE APPLICATION ON EVENT DISPATCH THREAD
+        SwingUtilities.invokeLater(Main::new);
     }
 }
