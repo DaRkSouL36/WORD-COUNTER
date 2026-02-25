@@ -154,28 +154,35 @@ public class Main extends JFrame implements ActionListener
         saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         exportPdfItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
 
-        // EDIT MENU WITH UNDO, REDO, AND FIND & REPLACE OPTIONS
+        // EDIT MENU WITH UNDO, REDO, FIND & REPLACE, AND GO TO OPTIONS
         JMenu editMenu = new JMenu("EDIT");
         JMenuItem undoItem = new JMenuItem("UNDO");
         JMenuItem redoItem = new JMenuItem("REDO");
         JMenuItem findItem = new JMenuItem("FIND");
         JMenuItem findReplaceItem = new JMenuItem("FIND & REPLACE");
+        JMenuItem goToItem = new JMenuItem("GO TO LINE");
 
         editMenu.add(undoItem); // ADD UNDO ITEM TO EDIT MENU
         editMenu.add(redoItem); // ADD REDO ITEM TO EDIT MENU
+        editMenu.addSeparator(); // ADD VISUAL SEPARATOR
         editMenu.add(findItem); // ADD FIND ITEM TO EDIT MENU
         editMenu.add(findReplaceItem); // ADD FIND & REPLACE ITEM TO EDIT MENU
+        editMenu.addSeparator(); // ADD VISUAL SEPARATOR
+        editMenu.add(goToItem); // ADD GO TO ITEM TO EDIT MENU
         menuBar.add(editMenu); // ADD EDIT MENU TO MENU BAR
+
         undoItem.addActionListener(this); // ADD ACTION LISTENER FOR UNDO
         redoItem.addActionListener(this); // ADD ACTION LISTENER FOR REDO
         findItem.addActionListener(this); // ADD ACTION LISTENER FOR FIND
         findReplaceItem.addActionListener(this); // ADD ACTION LISTENER FOR FIND & REPLACE
+        goToItem.addActionListener(this); // ADD ACTION LISTENER FOR GO TO
 
         // ADD KEYBOARD SHORTCUTS FOR EDIT MENU
         undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         findItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         findReplaceItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+        goToItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
 
         // FORMAT MENU FOR FONT AND COLOR CUSTOMIZATION
         JMenu formatMenu = new JMenu("FORMAT");
@@ -188,6 +195,22 @@ public class Main extends JFrame implements ActionListener
 
         fontItem.addActionListener(this);   // ADD ACTION LISTENER FOR FONT
         colorItem.addActionListener(this);  // ADD ACTION LISTENER FOR COLOR
+
+        // VIEW MENU FOR ZOOM CUSTOMIZATION (NEW MENU)
+        JMenu viewMenu = new JMenu("VIEW");
+        JMenuItem zoomInItem = new JMenuItem("ZOOM IN");
+        JMenuItem zoomOutItem = new JMenuItem("ZOOM OUT");
+
+        viewMenu.add(zoomInItem);
+        viewMenu.add(zoomOutItem);
+        menuBar.add(viewMenu);
+
+        zoomInItem.addActionListener(this);  // ADD ACTION LISTENER FOR ZOOM IN
+        zoomOutItem.addActionListener(this); // ADD ACTION LISTENER FOR ZOOM OUT
+
+        // ADD KEYBOARD SHORTCUTS FOR VIEW MENU
+        zoomInItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+        zoomOutItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
 
         // ADD KEYBOARD SHORTCUTS FOR BUTTON ACTIONS
         JRootPane rootPane = getRootPane();
@@ -431,6 +454,9 @@ public class Main extends JFrame implements ActionListener
             case "COLOR..." -> showColorChooser(); // OPEN COLOR SELECTION DIALOG
             case "FIND" -> showFindDialog(); // OPEN FIND DIALOG
             case "FIND & REPLACE" -> showFindAndReplaceDialog(); // OPEN FIND & REPLACE
+            case "GO TO LINE" -> showGoToLineDialog(); // TRIGGER GO TO LINE
+            case "ZOOM IN" -> zoomIn(); // TRIGGER ZOOM IN
+            case "ZOOM OUT" -> zoomOut(); // TRIGGER ZOOM OUT
             case "CLEAR TEXT" -> textArea.setText(""); // CLEAR TEXTAREA CONTENT
             case "EXIT" -> System.exit(0); // EXIT THE APPLICATION
             case "DARK MODE" -> toggleDarkMode(); // TOGGLE DARK MODE
