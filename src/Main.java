@@ -208,55 +208,44 @@ public class Main extends JFrame implements ActionListener
             }
         }
 
-        // COUNT SENTENCES WITH BASIC ABBREVIATION HANDLING
+        // COUNT SENTENCES WITH MULTIPLE PUNCTUATION AND ABBREVIATION HANDLING
         private int countSentences(String text)
         {
-            if(text.isEmpty())
+            if(text.isEmpty()) // IF TEXT IS EMPTY
                 return 0;
 
             // LIST OF COMMON ABBREVIATIONS
             String[] abbreviations = {"Mr.", "Mrs.", "Ms.", "Dr.", "Prof.", "Sr.", "Jr."};
             Set<String> abbreviationSet = new HashSet<>(Arrays.asList(abbreviations));
 
-            // SPLIT TEXT AT SENTENCE ENDINGS
-            String[] parts = text.split("(?<=[.!?])\\s+");
             int sentenceCount = 0;
 
-            for(int i = 0; i < parts.length; i++)
+            // REGEX TO MATCH SENTENCE-LIKE STRUCTURES
+            java.util.regex.Pattern pattern =
+                    java.util.regex.Pattern.compile("[^.!?]+[.!?]+");
+
+            java.util.regex.Matcher matcher = pattern.matcher(text);
+
+            while(matcher.find())
             {
-                String current = parts[i].trim();
+                String sentence = matcher.group().trim();
+
                 boolean isAbbreviation = false;
 
-                // CHECK IF PART ENDS WITH ABBREVIATION
+                // CHECK IF MATCH IS JUST AN ABBREVIATION
                 for(String abbr : abbreviationSet)
                 {
-                    if(current.endsWith(abbr))
+                    if(sentence.equals(abbr))
                     {
                         isAbbreviation = true;
                         break;
                     }
                 }
 
-                // IF NOT ABBREVIATION, COUNT AS SENTENCE
+                // COUNT ONLY IF NOT PURE ABBREVIATION
                 if(!isAbbreviation)
                 {
-                    if(!current.isEmpty())
-                        sentenceCount++;
-                }
-                else
-                {
-                    // HANDLE CASE WHERE ABBREVIATION IS ACTUALLY END OF SENTENCE
-                    if(i == parts.length - 1)
-                    {
-                        if(!current.isEmpty())
-                            sentenceCount++;
-                    }
-                    else
-                    {
-                        String next = parts[i + 1].trim();
-                        if(!next.isEmpty() && Character.isUpperCase(next.charAt(0)))
-                            sentenceCount++;
-                    }
+                    sentenceCount++;
                 }
             }
 
@@ -292,14 +281,26 @@ public class Main extends JFrame implements ActionListener
             {
                 JFileChooser fileChooser = new JFileChooser();
                 fileChooser.setFileFilter(new FileNameExtensionFilter("TEXT FILE", "txt")); // FILTER TEXT FILES
+
                 int option = fileChooser.showSaveDialog(this); // SHOW SAVE DIALOG
+
                 if(option == JFileChooser.APPROVE_OPTION) // IF FILE SELECTED
                 {
-                    try(BufferedWriter writer = new BufferedWriter(new FileWriter(fileChooser.getSelectedFile())))
+                    try
                     {
-                        textArea.write(writer); // WRITE TEXT AREA CONTENT TO FILE
+                        File file = fileChooser.getSelectedFile(); // GET SELECTED FILE
+
+                        // IF USER DID NOT TYPE ".txt", ADD IT AUTOMATICALLY
+                        if(!file.getName().toLowerCase().endsWith(".txt"))
+                        {
+                            file = new File(file.getAbsolutePath() + ".txt");
+                        }
+
+                        BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+                        textArea.write(writer); // WRITE CONTENT TO FILE
+                        writer.close(); // CLOSE WRITER
                     }
-                    catch(IOException ex) // HANDLE EXCEPTION
+                    catch(IOException ex)
                     {
                         ex.printStackTrace();
                     }
@@ -307,8 +308,15 @@ public class Main extends JFrame implements ActionListener
             }
             case "UNDO" -> // UNDO LAST ACTION
             {
-                if(undoManager.canUndo()) // IF UNDO IS POSSIBLE
-                    undoManager.undo(); // PERFORM UNDO ACTION
+                try
+                {
+                    if(undoManager.canUndo())
+                        undoManager.undo();
+                }
+                catch(Exception ex)
+                {
+                    ex.printStackTrace();
+                }
             }
             case "REDO" -> // REDO LAST ACTION
             {
@@ -341,7 +349,11 @@ public class Main extends JFrame implements ActionListener
         {
             String findText = findField.getText(); // GET TEXT TO FIND
             String replaceText = replaceField.getText(); // GET TEXT TO REPLACE
-            textArea.setText(textArea.getText().replace(findText, replaceText)); // REPLACE TEXT IN TEXTAREA
+
+            if(!findText.isEmpty())
+            {
+                textArea.setText(textArea.getText().replace(findText, replaceText)); // REPLACE TEXT IN TEXTAREA
+            }
         }
     }
 
