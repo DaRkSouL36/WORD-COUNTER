@@ -25,6 +25,7 @@ public class Main extends JFrame
     String currentFileName = "WORD COUNTER"; // TRACKS THE CURRENT FILE NAME (DEFAULTS TO APP NAME)
     LineNumberView lineNumbers; // TO COUNT LINE NUMBERS
     Highlighter.HighlightPainter highlightPainter; // HIGHLIGHT PAINTER FOR SEARCH
+    EditorDialogs dialogs = new EditorDialogs(this); // INITIALIZE THE DIALOGS HELPER
 
     // CONSTRUCTOR TO SET UP THE FRAME AND INITIALIZE COMPONENTS
     public Main()
@@ -149,7 +150,7 @@ public class Main extends JFrame
 
         Action exportPdfAction = new AbstractAction("EXPORT AS PDF")
         {
-            public void actionPerformed(ActionEvent e) { exportToPDF(); }
+            public void actionPerformed(ActionEvent e) { dialogs.exportToPDF(); }
         };
         exportPdfAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
 
@@ -175,30 +176,30 @@ public class Main extends JFrame
 
         Action findAction = new AbstractAction("FIND")
         {
-            public void actionPerformed(ActionEvent e) { showFindDialog(); }
+            public void actionPerformed(ActionEvent e) { dialogs.showFindDialog(); }
         };
         findAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_F, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
 
         Action findReplaceAction = new AbstractAction("FIND & REPLACE")
         {
-            public void actionPerformed(ActionEvent e) { showFindAndReplaceDialog(); }
+            public void actionPerformed(ActionEvent e) { dialogs.showFindAndReplaceDialog(); }
         };
         findReplaceAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
 
         Action goToLineAction = new AbstractAction("GO TO LINE")
         {
-            public void actionPerformed(ActionEvent e) { showGoToLineDialog(); }
+            public void actionPerformed(ActionEvent e) { dialogs.showGoToLineDialog(); }
         };
         goToLineAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_G, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
 
         Action fontAction = new AbstractAction("FONT...")
         {
-            public void actionPerformed(ActionEvent e) { showFontChooser(); }
+            public void actionPerformed(ActionEvent e) { dialogs.showFontChooser(); }
         };
 
         Action colorAction = new AbstractAction("COLOR...")
         {
-            public void actionPerformed(ActionEvent e) { showColorChooser(); }
+            public void actionPerformed(ActionEvent e) { dialogs.showColorChooser(); }
         };
 
         Action zoomInAction = new AbstractAction("ZOOM IN")
@@ -233,7 +234,7 @@ public class Main extends JFrame
 
         Action textStatsAction = new AbstractAction("TEXT STATISTICS")
         {
-            public void actionPerformed(ActionEvent e) { showTextStatistics(); }
+            public void actionPerformed(ActionEvent e) { dialogs.showTextStatistics(); }
         };
         // ASSIGN CTRL + I (FOR INFORMATION/INSPECTION) AS SHORTCUT
         textStatsAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_I, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
@@ -396,193 +397,8 @@ public class Main extends JFrame
     }
 
     // =========================================================================================
-    // UTILITY CLASSES AND METHODS
+    // UTILITY METHODS
     // =========================================================================================
-
-    // EXPORT TEXT CONTENT AS PDF
-    private void exportToPDF()
-    {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setSelectedFile(new File("document.pdf"));
-
-        int option = fileChooser.showSaveDialog(this);
-
-        if(option == JFileChooser.APPROVE_OPTION)
-        {
-            try
-            {
-                File file = fileChooser.getSelectedFile();
-
-                PrinterJob job = PrinterJob.getPrinterJob();
-                job.setJobName("EXPORT PDF");
-
-                job.setPrintable((graphics, pageFormat, pageIndex) ->
-                {
-                    if(pageIndex > 0)
-                        return Printable.NO_SUCH_PAGE;
-
-                    Graphics2D g2d = (Graphics2D) graphics;
-                    g2d.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
-
-                    textArea.printAll(graphics);
-                    return Printable.PAGE_EXISTS;
-                });
-
-                if(job.printDialog())
-                    job.print();
-            }
-            catch(Exception ex)
-            {
-                ex.printStackTrace();
-            }
-        }
-    }
-
-    // SHOW FIND DIALOG FOR WORD SEARCH AND HIGHLIGHT
-    private void showFindDialog()
-    {
-        JTextField findField = new JTextField(15);
-
-        int result = JOptionPane.showConfirmDialog(
-                this,
-                findField,
-                "FIND",
-                JOptionPane.OK_CANCEL_OPTION
-        );
-
-        if(result == JOptionPane.OK_OPTION)
-        {
-            String findText = findField.getText();
-            highlightText(findText); // HIGHLIGHT ONLY
-        }
-
-        // RETURN FOCUS TO EDITOR BEFORE CLOSING
-        textArea.requestFocusInWindow();
-    }
-
-    // SHOW FIND AND REPLACE DIALOG
-    private void showFindAndReplaceDialog()
-    {
-        JPanel panel = new JPanel(new GridLayout(2, 2)); // CREATE PANEL WITH GRID LAYOUT
-        JTextField findField = new JTextField(10); // TEXT FIELD FOR FIND TEXT
-        JTextField replaceField = new JTextField(10); // TEXT FIELD FOR REPLACE TEXT
-
-        panel.add(new JLabel("FIND")); // ADD LABEL FOR FIND
-        panel.add(findField); // ADD FIND TEXT FIELD
-        panel.add(new JLabel("REPLACE")); // ADD LABEL FOR REPLACE
-        panel.add(replaceField); // ADD REPLACE TEXT FIELD
-
-        int result = JOptionPane.showConfirmDialog(this, panel, "FIND & REPLACE", JOptionPane.OK_CANCEL_OPTION); // SHOW DIALOG
-        if(result == JOptionPane.OK_OPTION) // IF OK PRESSED
-        {
-            String findText = findField.getText();
-            String replaceText = replaceField.getText();
-
-            // REPLACE IF PROVIDED (NON-DESTRUCTIVE METHOD)
-            if(findText != null && !findText.isEmpty())
-            {
-                String text = textArea.getText();
-                int index = text.lastIndexOf(findText); // START FROM THE END TO PREVENT INDEX SHIFTING
-
-                textArea.requestFocusInWindow(); // SET FOCUS BEFORE REPLACING
-
-                // LOOP BACKWARDS THROUGH THE TEXT
-                while(index >= 0)
-                {
-                    // REPLACE ONLY THE TARGET RANGE
-                    textArea.replaceRange(replaceText, index, index + findText.length());
-
-                    // FIND THE PREVIOUS OCCURRENCE
-                    index = text.lastIndexOf(findText, index - 1);
-                }
-
-                // HIGHLIGHT THE NEW REPLACED TEXT (OPTIONAL BUT HELPFUL)
-                highlightText(replaceText);
-            }
-            else
-            {
-                // IF ONLY FINDING TEXT, JUST HIGHLIGHT IT
-                highlightText(findText);
-                textArea.requestFocusInWindow();
-            }
-        }
-
-        // RETURN FOCUS TO EDITOR BEFORE CLOSING
-        textArea.requestFocusInWindow();
-    }
-
-    // HIGHLIGHT ALL OCCURRENCES OF SEARCH TEXT
-    private void highlightText(String pattern)
-    {
-        Highlighter highlighter = textArea.getHighlighter();
-        highlighter.removeAllHighlights();
-
-        if(pattern == null || pattern.isEmpty())
-            return;
-
-        String text = textArea.getText().toLowerCase();
-        pattern = pattern.toLowerCase();
-
-        int index = 0;
-
-        while((index = text.indexOf(pattern, index)) != -1)
-        {
-            try
-            {
-                highlighter.addHighlight(index, index + pattern.length(), highlightPainter);
-                index += pattern.length();
-            }
-            catch(BadLocationException ex)
-            {
-                ex.printStackTrace();
-            }
-        }
-    }
-
-    // SHOW FONT SELECTION DIALOG
-    private void showFontChooser()
-    {
-        // GET AVAILABLE SYSTEM FONTS
-        String[] fontNames = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
-
-        // CREATE FONT AND SIZE SELECTION COMPONENTS
-        JComboBox<String> fontComboBox = new JComboBox<>(fontNames);
-        JComboBox<Integer> sizeComboBox = new JComboBox<>(new Integer[]{12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 36, 40});
-
-        // CREATE PANEL FOR DIALOG
-        JPanel panel = new JPanel();
-        panel.add(new JLabel("FONT : "));
-        panel.add(fontComboBox);
-        panel.add(new JLabel("SIZE : "));
-        panel.add(sizeComboBox);
-
-        // SHOW DIALOG
-        int result = JOptionPane.showConfirmDialog(this, panel, "SELECT FONT", JOptionPane.OK_CANCEL_OPTION);
-
-        if(result == JOptionPane.OK_OPTION)
-        {
-            String selectedFont = (String) fontComboBox.getSelectedItem();
-            int selectedSize = (Integer) sizeComboBox.getSelectedItem();
-
-            Font newFont = new Font(selectedFont, Font.PLAIN, selectedSize);
-
-            // APPLY FONT TO TEXT AREA AND COUNT LABELS
-            applyDynamicFont(newFont);
-        }
-    }
-
-    // SHOW COLOR SELECTION DIALOG
-    private void showColorChooser()
-    {
-        // OPEN COLOR CHOOSER WITH CURRENT TEXT COLOR AS DEFAULT
-        Color newColor = JColorChooser.showDialog(this, "SELECT TEXT COLOR", textArea.getForeground());
-
-        // APPLY SELECTED COLOR IF USER DID NOT CANCEL
-        if(newColor != null)
-        {
-            textArea.setForeground(newColor);
-        }
-    }
 
     // INCREASE FONT SIZE BY 2 POINTS (ZOOM IN)
     private void zoomIn()
@@ -609,7 +425,7 @@ public class Main extends JFrame
     }
 
     // APPLY NEW FONT SIZE TO ALL RELEVANT UI COMPONENTS
-    private void applyDynamicFont(Font newFont)
+    public void applyDynamicFont(Font newFont)
     {
         textArea.setFont(newFont);
         lineNumbers.setFont(newFont);
@@ -617,65 +433,6 @@ public class Main extends JFrame
         wordCountLabel.setFont(newFont);
         sentenceCountLabel.setFont(newFont);
         statusBar.setFont(newFont);
-    }
-
-    // SHOW GO TO LINE DIALOG AND JUMP TO SPECIFIED LINE
-    private void showGoToLineDialog()
-    {
-        // PROMPT USER FOR LINE NUMBER
-        String input = JOptionPane.showInputDialog(
-                this,
-                "ENTER LINE NUMBER :",
-                "GO TO LINE",
-                JOptionPane.QUESTION_MESSAGE
-        );
-
-        // CHECK IF USER CLICKED CANCEL OR ENTERED EMPTY STRING
-        if(input != null && !input.trim().isEmpty())
-        {
-            try
-            {
-                int lineNumber = Integer.parseInt(input.trim()); // PARSE INPUT TO INTEGER
-                int totalLines = textArea.getLineCount(); // GET TOTAL LINES IN DOCUMENT
-
-                // VALIDATE IF LINE NUMBER IS WITHIN BOUNDS
-                if(lineNumber < 1 || lineNumber > totalLines)
-                {
-                    JOptionPane.showMessageDialog(
-                            this,
-                            "LINE NUMBER OUT OF RANGE (1 - " + totalLines + ").",
-                            "ERROR",
-                            JOptionPane.ERROR_MESSAGE
-                    );
-                    return;
-                }
-
-                // GET THE STARTING OFFSET OF THE TARGET LINE (0-INDEXED FOR API, 1-INDEXED FOR USER)
-                int offset = textArea.getLineStartOffset(lineNumber - 1);
-
-                // MOVE CARET TO THE CALCULATED OFFSET
-                textArea.setCaretPosition(offset);
-                textArea.requestFocusInWindow(); // RETURN FOCUS TO THE TEXT EDITOR
-            }
-            catch(NumberFormatException ex) // HANDLE NON-NUMERIC INPUT
-            {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "INVALID INPUT. PLEASE ENTER A VALID NUMBER.",
-                        "ERROR",
-                        JOptionPane.ERROR_MESSAGE
-                );
-            }
-            catch(BadLocationException ex) // HANDLE TEXT AREA BOUNDARY ERRORS
-            {
-                ex.printStackTrace();
-            }
-        }
-        else
-        {
-            // IF DIALOG IS CANCELLED, JUST RETURN FOCUS TO EDITOR
-            textArea.requestFocusInWindow();
-        }
     }
 
     // TOGGLE BETWEEN DARK AND LIGHT MODE
@@ -747,85 +504,6 @@ public class Main extends JFrame
         // IF THERE ARE UNSAVED CHANGES, PREPEND AN ASTERISK
         String prefix = hasUnsavedChanges ? "* " : "";
         setTitle(prefix + currentFileName);
-    }
-
-    // CALCULATE AND DISPLAY DETAILED TEXT STATISTICS
-    private void showTextStatistics()
-    {
-        String text = textArea.getText(); // GET CURRENT TEXT
-
-        // INITIALIZE COUNTERS
-        int paragraphs = 0;
-        int vowels = 0;
-        int consonants = 0;
-        String longestWord = "N/A";
-        int totalWordLength = 0;
-        double averageWordLength = 0.0;
-
-        if(!text.trim().isEmpty()) // ONLY CALCULATE IF TEXT IS NOT EMPTY
-        {
-            // COUNT PARAGRAPHS (SPLIT BY ONE OR MORE NEWLINES)
-            paragraphs = text.trim().split("\\n+").length;
-
-            // COUNT VOWELS AND CONSONANTS
-            for(char c : text.toLowerCase().toCharArray())
-            {
-                if(Character.isLetter(c)) // ONLY CHECK ALPHABETIC CHARACTERS
-                {
-                    if("aeiou".indexOf(c) != -1)
-                        vowels++;
-                    else
-                        consonants++;
-                }
-            }
-
-            // FIND LONGEST WORD AND AVERAGE LENGTH
-            String[] words = text.trim().split("\\s+");
-            longestWord = ""; // RESET FOR ACTUAL CALCULATION
-
-            for(String word : words)
-            {
-                // REMOVE PUNCTUATION FROM WORD FOR ACCURATE LENGTH CALCULATION
-                String cleanWord = word.replaceAll("[^a-zA-Z0-9]", "");
-
-                totalWordLength += cleanWord.length();
-
-                if(cleanWord.length() > longestWord.length())
-                {
-                    longestWord = cleanWord;
-                }
-            }
-
-            if(words.length > 0)
-            {
-                averageWordLength = (double) totalWordLength / words.length;
-            }
-
-            if(longestWord.isEmpty())
-            {
-                longestWord = "N/A";
-            }
-        }
-
-        // FORMAT THE OUTPUT MESSAGE FOR THE DIALOG
-        String statsMessage = String.format(
-                "TOTAL PARAGRAPHS : %d\n" +
-                        "NUMBER OF VOWELS : %d\n" +
-                        "NUMBER OF CONSONANTS : %d\n" +
-                        "LONGEST WORD : \"%s\"\n" +
-                        "AVERAGE WORD LENGTH : %.2f CHARACTERS",
-                paragraphs, vowels, consonants, longestWord, averageWordLength
-        );
-
-        // SHOW THE DIALOG BOX
-        JOptionPane.showMessageDialog(
-                this,
-                statsMessage,
-                "TEXT STATISTICS",
-                JOptionPane.INFORMATION_MESSAGE
-        );
-
-        textArea.requestFocusInWindow(); // RETURN FOCUS TO EDITOR
     }
 
     // MAIN METHOD TO RUN THE APPLICATION
