@@ -16,7 +16,7 @@ public class Main extends JFrame implements ActionListener
     JTextArea textArea; // TEXTAREA FOR ENTERING AND DISPLAYING TEXT
     JLabel charCountLabel, wordCountLabel, sentenceCountLabel, statusBar; // LABELS TO DISPLAY CHARACTER, WORD, AND SENTENCE COUNTS; CURRENT LINE AND COLUMN POSITION
     JButton clearButton, exitButton, darkModeButton; // BUTTONS FOR CLEARING TEXT, EXITING, AND TOGGLING DARK MODE
-    JPanel buttonPanel, countPanel; // PANELS FOR LAYOUT OF BUTTONS AND COUNTS
+    JPanel buttonPanel, countPanel, bottomPanel; // PANELS FOR BUTTONS, COUNTS, AND BOTTOM SECTION
     UndoManager undoManager; // UNDO MANAGER TO HANDLE UNDO/REDO ACTIONS
     boolean isDarkMode = false; // FLAG TO TOGGLE DARK MODE
 
@@ -112,7 +112,8 @@ public class Main extends JFrame implements ActionListener
         statusBar.setHorizontalAlignment(SwingConstants.CENTER);
 
         // CREATE BOTTOM PANEL TO HOLD COUNT PANEL AND STATUS BAR
-        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.setBackground(Color.WHITE);
         bottomPanel.add(countPanel, BorderLayout.NORTH);
         bottomPanel.add(statusBar, BorderLayout.SOUTH);
 
@@ -400,23 +401,35 @@ public class Main extends JFrame implements ActionListener
 
         if(isDarkMode) // IF DARK MODE ENABLED
         {
-            textArea.setBackground(Color.BLACK); // SET TEXTAREA BACKGROUND TO BLACK
-            textArea.setForeground(Color.WHITE); // SET TEXTAREA TEXT COLOR TO WHITE
-            charCountLabel.setForeground(Color.WHITE); // SET LABEL TEXT TO WHITE
-            wordCountLabel.setForeground(Color.WHITE); // SET LABEL TEXT TO WHITE
-            sentenceCountLabel.setForeground(Color.WHITE); // SET LABEL TEXT TO WHITE
-            countPanel.setBackground(Color.DARK_GRAY); // SET COUNT PANEL BACKGROUND TO DARK GRAY
-            buttonPanel.setBackground(Color.DARK_GRAY); // SET BUTTON PANEL BACKGROUND TO DARK GRAY
+            textArea.setBackground(Color.BLACK);
+            textArea.setForeground(Color.WHITE);
+
+            charCountLabel.setForeground(Color.WHITE);
+            wordCountLabel.setForeground(Color.WHITE);
+            sentenceCountLabel.setForeground(Color.WHITE);
+            statusBar.setForeground(Color.WHITE);
+
+            bottomPanel.setBackground(Color.DARK_GRAY);
+            countPanel.setBackground(Color.DARK_GRAY);
+            buttonPanel.setBackground(Color.DARK_GRAY);
+
+            getContentPane().setBackground(Color.DARK_GRAY);
         }
         else // IF LIGHT MODE ENABLED
         {
-            textArea.setBackground(Color.WHITE); // SET TEXTAREA BACKGROUND TO WHITE
-            textArea.setForeground(Color.BLACK); // SET TEXTAREA TEXT COLOR TO BLACK
-            charCountLabel.setForeground(Color.DARK_GRAY); // SET LABEL TEXT TO DARK GRAY
-            wordCountLabel.setForeground(Color.DARK_GRAY); // SET LABEL TEXT TO DARK GRAY
-            sentenceCountLabel.setForeground(Color.DARK_GRAY); // SET LABEL TEXT TO DARK GRAY
-            countPanel.setBackground(Color.WHITE); // SET COUNT PANEL BACKGROUND TO WHITE
-            buttonPanel.setBackground(Color.WHITE); // SET BUTTON PANEL BACKGROUND TO WHITE
+            textArea.setBackground(Color.WHITE);
+            textArea.setForeground(Color.BLACK);
+
+            charCountLabel.setForeground(Color.DARK_GRAY);
+            wordCountLabel.setForeground(Color.DARK_GRAY);
+            sentenceCountLabel.setForeground(Color.DARK_GRAY);
+            statusBar.setForeground(Color.BLACK);
+
+            bottomPanel.setBackground(Color.WHITE);
+            countPanel.setBackground(Color.WHITE);
+            buttonPanel.setBackground(Color.WHITE);
+
+            getContentPane().setBackground(Color.WHITE);
         }
     }
 
