@@ -27,7 +27,6 @@ public class Main extends JFrame implements ActionListener
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // CLOSE APPLICATION ON WINDOW CLOSE
         setSize(1000, 500); // SET WINDOW SIZE (WIDTH: 1000px, HEIGHT: 500px)
         setLocationRelativeTo(null); // CENTER THE FRAME ON SCREEN
-        setVisible(true); // MAKE THE FRAME VISIBLE
         setLayout(new BorderLayout()); // SET THE FRAME'S LAYOUT TO BORDER LAYOUT
         getContentPane().setBackground(Color.WHITE); // SET BACKGROUND COLOR OF THE FRAME TO WHITE
 
@@ -162,6 +161,8 @@ public class Main extends JFrame implements ActionListener
 
         // SET MENU BAR
         setJMenuBar(menuBar);
+
+        setVisible(true); // MAKE FRAME VISIBLE
     }
 
     // DOCUMENT LISTENER TO TRACK TEXT CHANGES
@@ -249,6 +250,12 @@ public class Main extends JFrame implements ActionListener
                 }
             }
 
+            // IF TEXT EXISTS BUT NO PUNCTUATION FOUND, COUNT AS ONE SENTENCE
+            if(sentenceCount == 0 && !text.trim().isEmpty())
+            {
+                sentenceCount = 1;
+            }
+
             return sentenceCount;
         }
     }
@@ -320,8 +327,15 @@ public class Main extends JFrame implements ActionListener
             }
             case "REDO" -> // REDO LAST ACTION
             {
-                if(undoManager.canRedo()) // IF REDO IS POSSIBLE
-                    undoManager.redo(); // PERFORM REDO ACTION
+                try
+                {
+                    if(undoManager.canRedo())
+                        undoManager.redo();
+                }
+                catch(Exception ex)
+                {
+                    ex.printStackTrace();
+                }
             }
             case "FONT..." -> showFontChooser(); // OPEN FONT SELECTION DIALOG
             case "COLOR..." -> showColorChooser(); // OPEN COLOR SELECTION DIALOG
