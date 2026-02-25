@@ -221,6 +221,13 @@ public class Main extends JFrame
         };
         darkModeAction.putValue(Action.SHORT_DESCRIPTION, "TOGGLE DARK MODE");
 
+        Action textStatsAction = new AbstractAction("TEXT STATISTICS")
+        {
+            public void actionPerformed(ActionEvent e) { showTextStatistics(); }
+        };
+        // ASSIGN CTRL + I (FOR INFORMATION/INSPECTION) AS SHORTCUT
+        textStatsAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_I, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+
         // =========================================================================================
         // INITIALIZE BUTTONS USING ACTIONS
         // =========================================================================================
@@ -286,6 +293,11 @@ public class Main extends JFrame
         viewMenu.add(new JMenuItem(zoomInAction));
         viewMenu.add(new JMenuItem(zoomOutAction));
         menuBar.add(viewMenu);
+
+        // TOOLS MENU (NEW MENU)
+        JMenu toolsMenu = new JMenu("TOOLS");
+        toolsMenu.add(new JMenuItem(textStatsAction));
+        menuBar.add(toolsMenu);
 
         // SET MENU BAR
         setJMenuBar(menuBar);
@@ -794,6 +806,85 @@ public class Main extends JFrame
         }
 
         statusBar.setText("LINE : " + (lineNumber + 1) + " | COLUMN : " + (columnNumber + 1));
+    }
+
+    // CALCULATE AND DISPLAY DETAILED TEXT STATISTICS
+    private void showTextStatistics()
+    {
+        String text = textArea.getText(); // GET CURRENT TEXT
+
+        // INITIALIZE COUNTERS
+        int paragraphs = 0;
+        int vowels = 0;
+        int consonants = 0;
+        String longestWord = "N/A";
+        int totalWordLength = 0;
+        double averageWordLength = 0.0;
+
+        if(!text.trim().isEmpty()) // ONLY CALCULATE IF TEXT IS NOT EMPTY
+        {
+            // COUNT PARAGRAPHS (SPLIT BY ONE OR MORE NEWLINES)
+            paragraphs = text.trim().split("\\n+").length;
+
+            // COUNT VOWELS AND CONSONANTS
+            for(char c : text.toLowerCase().toCharArray())
+            {
+                if(Character.isLetter(c)) // ONLY CHECK ALPHABETIC CHARACTERS
+                {
+                    if("aeiou".indexOf(c) != -1)
+                        vowels++;
+                    else
+                        consonants++;
+                }
+            }
+
+            // FIND LONGEST WORD AND AVERAGE LENGTH
+            String[] words = text.trim().split("\\s+");
+            longestWord = ""; // RESET FOR ACTUAL CALCULATION
+
+            for(String word : words)
+            {
+                // REMOVE PUNCTUATION FROM WORD FOR ACCURATE LENGTH CALCULATION
+                String cleanWord = word.replaceAll("[^a-zA-Z0-9]", "");
+
+                totalWordLength += cleanWord.length();
+
+                if(cleanWord.length() > longestWord.length())
+                {
+                    longestWord = cleanWord;
+                }
+            }
+
+            if(words.length > 0)
+            {
+                averageWordLength = (double) totalWordLength / words.length;
+            }
+
+            if(longestWord.isEmpty())
+            {
+                longestWord = "N/A";
+            }
+        }
+
+        // FORMAT THE OUTPUT MESSAGE FOR THE DIALOG
+        String statsMessage = String.format(
+                "TOTAL PARAGRAPHS : %d\n" +
+                        "NUMBER OF VOWELS : %d\n" +
+                        "NUMBER OF CONSONANTS : %d\n" +
+                        "LONGEST WORD : \"%s\"\n" +
+                        "AVERAGE WORD LENGTH : %.2f CHARACTERS",
+                paragraphs, vowels, consonants, longestWord, averageWordLength
+        );
+
+        // SHOW THE DIALOG BOX
+        JOptionPane.showMessageDialog(
+                this,
+                statsMessage,
+                "TEXT STATISTICS",
+                JOptionPane.INFORMATION_MESSAGE
+        );
+
+        textArea.requestFocusInWindow(); // RETURN FOCUS TO EDITOR
     }
 
     // MAIN METHOD TO RUN THE APPLICATION
