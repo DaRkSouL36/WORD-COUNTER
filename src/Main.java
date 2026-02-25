@@ -21,6 +21,7 @@ public class Main extends JFrame implements ActionListener
     JPanel buttonPanel, countPanel, bottomPanel; // PANELS FOR BUTTONS, COUNTS, AND BOTTOM SECTION
     UndoManager undoManager; // UNDO MANAGER TO HANDLE UNDO/REDO ACTIONS
     boolean isDarkMode = false; // FLAG TO TOGGLE DARK MODE
+    LineNumberView lineNumbers; // TO COUNT LINE NUMBERS
 
     // CONSTRUCTOR TO SET UP THE FRAME AND INITIALIZE COMPONENTS
     public Main()
@@ -43,8 +44,13 @@ public class Main extends JFrame implements ActionListener
         textArea.getDocument().addUndoableEditListener(undoManager); // ATTACH UNDO MANAGER TO DOCUMENT CHANGES
         textArea.getDocument().addDocumentListener(new Count()); // ADD DOCUMENT LISTENER TO UPDATE COUNTS
 
+        // CREATE LINE NUMBER COMPONENT FIRST
+        lineNumbers = new LineNumberView(textArea);
+        lineNumbers.updateLineNumbers();
+
         // CREATE A SCROLLPANE TO HOLD THE TEXT AREA (SCROLLING TEXT)
         JScrollPane scrollPane = new JScrollPane(textArea);
+        scrollPane.setRowHeaderView(lineNumbers);
         scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // ADD PADDING TO SCROLLPANE BORDER
 
         // ADD CARET LISTENER TO TRACK LINE AND COLUMN POSITION
@@ -247,6 +253,8 @@ public class Main extends JFrame implements ActionListener
                 wordCountLabel.setText("WORD COUNT : " + wordCount); // UPDATE WORD COUNT LABEL
                 sentenceCountLabel.setText("SENTENCE COUNT : " + sentenceCount); // UPDATE SENTENCE COUNT LABEL
             }
+
+            lineNumbers.updateLineNumbers();
         }
 
         // COUNT SENTENCES WITH MULTIPLE PUNCTUATION AND ABBREVIATION HANDLING
@@ -481,6 +489,7 @@ public class Main extends JFrame implements ActionListener
 
             // APPLY FONT TO TEXT AREA AND COUNT LABELS
             textArea.setFont(newFont);
+            lineNumbers.setFont(newFont);
             charCountLabel.setFont(newFont);
             wordCountLabel.setFont(newFont);
             sentenceCountLabel.setFont(newFont);
@@ -521,6 +530,8 @@ public class Main extends JFrame implements ActionListener
             buttonPanel.setBackground(Color.DARK_GRAY);
 
             getContentPane().setBackground(Color.DARK_GRAY);
+            lineNumbers.setBackground(Color.DARK_GRAY);
+            lineNumbers.setForeground(Color.WHITE);
         }
         else // IF LIGHT MODE ENABLED
         {
@@ -537,6 +548,8 @@ public class Main extends JFrame implements ActionListener
             buttonPanel.setBackground(Color.WHITE);
 
             getContentPane().setBackground(Color.WHITE);
+            lineNumbers.setBackground(Color.LIGHT_GRAY);
+            lineNumbers.setForeground(Color.BLACK);
         }
     }
 
@@ -564,5 +577,35 @@ public class Main extends JFrame implements ActionListener
     public static void main(String[] args)
     {
         SwingUtilities.invokeLater(Main::new); // RUN THE APPLICATION ON EVENT DISPATCH THREAD
+    }
+}
+
+// COMPONENT TO DISPLAY LINE NUMBERS
+class LineNumberView extends JTextArea
+{
+    JTextArea textArea;
+
+    public LineNumberView(JTextArea textArea)
+    {
+        this.textArea = textArea;
+        setBackground(Color.LIGHT_GRAY);
+        setEditable(false);
+        setFont(textArea.getFont());
+
+        setMargin(new Insets(0, 2, 0, 2));
+        setFocusable(false);
+    }
+
+    public void updateLineNumbers()
+    {
+        int lines = textArea.getLineCount();
+        StringBuilder builder = new StringBuilder();
+
+        for(int i = 1; i <= lines; i++)
+        {
+            builder.append(i).append(System.lineSeparator());
+        }
+
+        setText(builder.toString());
     }
 }
