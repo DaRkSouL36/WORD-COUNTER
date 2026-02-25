@@ -21,6 +21,8 @@ public class Main extends JFrame
     JPanel buttonPanel, countPanel, bottomPanel; // PANELS FOR BUTTONS, COUNTS, AND BOTTOM SECTION
     UndoManager undoManager; // UNDO MANAGER TO HANDLE UNDO/REDO ACTIONS
     boolean isDarkMode = false; // FLAG TO TOGGLE DARK MODE
+    boolean hasUnsavedChanges = false; // FLAG TO TRACK IF DOCUMENT HAS BEEN MODIFIED
+    String currentFileName = "WORD COUNTER"; // TRACKS THE CURRENT FILE NAME (DEFAULTS TO APP NAME)
     LineNumberView lineNumbers; // TO COUNT LINE NUMBERS
     Highlighter.HighlightPainter highlightPainter; // HIGHLIGHT PAINTER FOR SEARCH
 
@@ -95,9 +97,14 @@ public class Main extends JFrame
                 {
                     try(BufferedReader reader = new BufferedReader(new FileReader(fileChooser.getSelectedFile())))
                     {
-                        textArea.read(reader, null);
+                        textArea.read(reader, null); // THIS TRIGGERS THE DOCUMENT LISTENER
                         lineNumbers.updateLineNumbers();
                         undoManager.discardAllEdits();
+
+                        // --- LOGIC FOR UNSAVED CHANGES INDICATOR ---
+                        currentFileName = fileChooser.getSelectedFile().getName(); // GET FILE NAME
+                        hasUnsavedChanges = false; // RESET FLAG (MUST BE AFTER textArea.read!)
+                        updateWindowTitle(); // UPDATE TITLE BAR
                     }
                     catch(IOException ex)
                     {
@@ -106,7 +113,6 @@ public class Main extends JFrame
                 }
             }
         };
-        openAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
 
         Action saveAction = new AbstractAction("SAVE")
         {
@@ -127,6 +133,11 @@ public class Main extends JFrame
                         BufferedWriter writer = new BufferedWriter(new FileWriter(file));
                         textArea.write(writer);
                         writer.close();
+
+                        // --- LOGIC FOR UNSAVED CHANGES INDICATOR ---
+                        currentFileName = file.getName(); // UPDATE TO SAVED FILE NAME
+                        hasUnsavedChanges = false; // RESET FLAG
+                        updateWindowTitle(); // UPDATE TITLE BAR
                     }
                     catch(IOException ex)
                     {
@@ -135,7 +146,6 @@ public class Main extends JFrame
                 }
             }
         };
-        saveAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
 
         Action exportPdfAction = new AbstractAction("EXPORT AS PDF")
         {
@@ -413,6 +423,13 @@ public class Main extends JFrame
             }
 
             lineNumbers.updateLineNumbers();
+
+            // ONLY UPDATE THE TITLE BAR IF THE FLAG ISN'T ALREADY SET TO TRUE
+            if(!hasUnsavedChanges)
+            {
+                hasUnsavedChanges = true;
+                updateWindowTitle();
+            }
         }
 
         // COUNT SENTENCES WITH MULTIPLE PUNCTUATION AND ABBREVIATION HANDLING
@@ -806,6 +823,14 @@ public class Main extends JFrame
         }
 
         statusBar.setText("LINE : " + (lineNumber + 1) + " | COLUMN : " + (columnNumber + 1));
+    }
+
+    // DYNAMICALLY UPDATE THE WINDOW TITLE BASED ON SAVE STATE AND FILE NAME
+    private void updateWindowTitle()
+    {
+        // IF THERE ARE UNSAVED CHANGES, PREPEND AN ASTERISK
+        String prefix = hasUnsavedChanges ? "* " : "";
+        setTitle(prefix + currentFileName);
     }
 
     // CALCULATE AND DISPLAY DETAILED TEXT STATISTICS
