@@ -237,6 +237,13 @@ public class Main extends JFrame implements ActionListener
                 JComponent.WHEN_IN_FOCUSED_WINDOW
         );
 
+        // GO TO LINE : CTRL + G
+        rootPane.registerKeyboardAction(
+                e -> showGoToLineDialog(),
+                KeyStroke.getKeyStroke(KeyEvent.VK_G, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
+                JComponent.WHEN_IN_FOCUSED_WINDOW
+        );
+
         // SET MENU BAR
         setJMenuBar(menuBar);
 
@@ -634,6 +641,65 @@ public class Main extends JFrame implements ActionListener
         wordCountLabel.setFont(newFont);
         sentenceCountLabel.setFont(newFont);
         statusBar.setFont(newFont);
+    }
+
+    // SHOW GO TO LINE DIALOG AND JUMP TO SPECIFIED LINE
+    private void showGoToLineDialog()
+    {
+        // PROMPT USER FOR LINE NUMBER
+        String input = JOptionPane.showInputDialog(
+                this,
+                "ENTER LINE NUMBER :",
+                "GO TO LINE",
+                JOptionPane.QUESTION_MESSAGE
+        );
+
+        // CHECK IF USER CLICKED CANCEL OR ENTERED EMPTY STRING
+        if(input != null && !input.trim().isEmpty())
+        {
+            try
+            {
+                int lineNumber = Integer.parseInt(input.trim()); // PARSE INPUT TO INTEGER
+                int totalLines = textArea.getLineCount(); // GET TOTAL LINES IN DOCUMENT
+
+                // VALIDATE IF LINE NUMBER IS WITHIN BOUNDS
+                if(lineNumber < 1 || lineNumber > totalLines)
+                {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "LINE NUMBER OUT OF RANGE (1 - " + totalLines + ").",
+                            "ERROR",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                    return;
+                }
+
+                // GET THE STARTING OFFSET OF THE TARGET LINE (0-INDEXED FOR API, 1-INDEXED FOR USER)
+                int offset = textArea.getLineStartOffset(lineNumber - 1);
+
+                // MOVE CARET TO THE CALCULATED OFFSET
+                textArea.setCaretPosition(offset);
+                textArea.requestFocusInWindow(); // RETURN FOCUS TO THE TEXT EDITOR
+            }
+            catch(NumberFormatException ex) // HANDLE NON-NUMERIC INPUT
+            {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "INVALID INPUT. PLEASE ENTER A VALID NUMBER.",
+                        "ERROR",
+                        JOptionPane.ERROR_MESSAGE
+                );
+            }
+            catch(BadLocationException ex) // HANDLE TEXT AREA BOUNDARY ERRORS
+            {
+                ex.printStackTrace();
+            }
+        }
+        else
+        {
+            // IF DIALOG IS CANCELLED, JUST RETURN FOCUS TO EDITOR
+            textArea.requestFocusInWindow();
+        }
     }
 
     // TOGGLE BETWEEN DARK AND LIGHT MODE
